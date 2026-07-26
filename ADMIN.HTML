@@ -12,7 +12,6 @@
             background-color: #f5f7fa; 
             margin: 0; 
             color: #2c3e50; 
-            display: none; /* مخفي لحد ما نكتب الباسورد */
         }
         
         .admin-header {
@@ -86,48 +85,50 @@
 </head>
 <body>
 
-    <div class="admin-header">
-        <h1 class="admin-title">لوحة التحكم ⚙️</h1>
-        <div class="header-buttons">
-            <!-- زرار الانتقال للماسح -->
-            <button class="btn btn-scanner" onclick="window.location.href='Scanner.html'">📷 ماسح التذاكر</button>
-            <button class="btn btn-export" onclick="exportCSV()">📊 تحميل Excel</button>
+    <!-- الديف ده مخفي لحد ما يتم إدخال الباسورد الصح -->
+    <div id="main-content" style="display: none;">
+        <div class="admin-header">
+            <h1 class="admin-title">لوحة التحكم ⚙️</h1>
+            <div class="header-buttons">
+                <button class="btn btn-scanner" onclick="window.location.href='Scanner.html'">📷 ماسح التذاكر</button>
+                <button class="btn btn-export" onclick="exportCSV()">📊 تحميل Excel</button>
+            </div>
         </div>
-    </div>
 
-    <div class="dashboard-stats">
-        <div class="stat-card">
-            <h3>إجمالي الحجوزات</h3>
-            <p class="num" id="total-booked">0</p>
+        <div class="dashboard-stats">
+            <div class="stat-card">
+                <h3>إجمالي الحجوزات</h3>
+                <p class="num" id="total-booked">0</p>
+            </div>
+            <div class="stat-card stat-attended">
+                <h3>حضور مؤكد (تم المسح)</h3>
+                <p class="num" id="total-attended">0</p>
+            </div>
+            <div class="stat-card stat-pending">
+                <h3>في الانتظار</h3>
+                <p class="num" id="total-pending">0</p>
+            </div>
         </div>
-        <div class="stat-card stat-attended">
-            <h3>حضور مؤكد (تم المسح)</h3>
-            <p class="num" id="total-attended">0</p>
-        </div>
-        <div class="stat-card stat-pending">
-            <h3>في الانتظار</h3>
-            <p class="num" id="total-pending">0</p>
-        </div>
-    </div>
 
-    <div class="table-container">
-        <input type="text" id="search-input" class="search-bar" placeholder="🔍 ابحث بالاسم، رقم المقعد، أو الكود..." onkeyup="filterTable()">
-        
-        <table id="data-table">
-            <thead>
-                <tr>
-                    <th>المقعد</th>
-                    <th>الاسم</th>
-                    <th>الكود</th>
-                    <th>تاريخ الحجز</th>
-                    <th>الحالة</th>
-                    <th>إجراء يدوي</th>
-                </tr>
-            </thead>
-            <tbody id="table-body">
-                <!-- البيانات هتنزل هنا -->
-            </tbody>
-        </table>
+        <div class="table-container">
+            <input type="text" id="search-input" class="search-bar" placeholder="🔍 ابحث بالاسم، رقم المقعد، أو الكود..." onkeyup="filterTable()">
+            
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>المقعد</th>
+                        <th>الاسم</th>
+                        <th>الكود</th>
+                        <th>تاريخ الحجز</th>
+                        <th>الحالة</th>
+                        <th>إجراء يدوي</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- البيانات هتنزل هنا -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <script type="module">
@@ -145,11 +146,10 @@
             confirmButtonColor: '#2c3e50'
         }).then((result) => {
             if (result.value === 'rave2026') {
-                document.body.style.display = 'block';
+                document.getElementById('main-content').style.display = 'block'; // إظهار المحتوى
                 Swal.fire({ icon: 'success', title: 'مرحباً بك', timer: 1000, showConfirmButton: false });
             } else {
                 document.body.innerHTML = '<h2 style="text-align:center; margin-top:50px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
-                document.body.style.display = 'block';
             }
         });
 
