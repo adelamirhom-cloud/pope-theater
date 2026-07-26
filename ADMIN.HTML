@@ -8,66 +8,76 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body { 
-            font-family: 'Cairo', sans-serif; 
-            background-color: #f5f7fa; 
-            margin: 0; 
-            color: #2c3e50; 
+            font-family: 'Cairo', sans-serif; background-color: #f5f7fa; 
+            margin: 0; color: #2c3e50; 
         }
         
+        /* الهيدر */
         .admin-header {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: white; padding: 20px 30px;
-            display: flex; justify-content: space-between; align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 20px 30px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             flex-wrap: wrap; gap: 15px;
         }
-        
         .admin-title { margin: 0; font-size: 24px; font-weight: 700; color: #f1c40f; }
-        
         .header-buttons { display: flex; gap: 10px; flex-wrap: wrap;}
         
         .btn {
             padding: 10px 20px; border: none; border-radius: 8px; font-family: 'Cairo', sans-serif;
-            font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; color: white;
-            display: flex; align-items: center; gap: 8px; text-decoration: none;
+            font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; color: white; text-decoration: none; display: flex; align-items: center; gap: 8px;
         }
         .btn-scanner { background-color: #9b59b6; }
         .btn-scanner:hover { background-color: #8e44ad; }
         .btn-export { background-color: #27ae60; }
         .btn-export:hover { background-color: #2ecc71; }
-        
-        .dashboard-stats {
-            display: flex; gap: 20px; padding: 25px 30px; flex-wrap: wrap; justify-content: center;
-        }
+        .btn-danger { background-color: #e74c3c; }
+        .btn-danger:hover { background-color: #c0392b; }
+
+        /* الإحصائيات */
+        .dashboard-stats { display: flex; gap: 20px; padding: 25px 30px; flex-wrap: wrap; justify-content: center; }
         .stat-card {
-            background: white; padding: 20px; border-radius: 15px; min-width: 200px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; flex: 1;
-            border-bottom: 4px solid #3498db;
+            background: white; padding: 20px; border-radius: 15px; min-width: 150px; flex: 1;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #3498db;
         }
-        .stat-card h3 { margin: 0; color: #7f8c8d; font-size: 16px; }
-        .stat-card .num { font-size: 36px; font-weight: 700; color: #2c3e50; margin: 10px 0 0 0; }
+        .stat-card h3 { margin: 0; color: #7f8c8d; font-size: 15px; }
+        .stat-card .num { font-size: 32px; font-weight: 700; color: #2c3e50; margin: 10px 0 0 0; }
         .stat-attended { border-color: #2ecc71; }
         .stat-pending { border-color: #f39c12; }
+        .stat-percentage { border-color: #9b59b6; }
 
-        .table-container {
-            background: white; margin: 20px 30px; border-radius: 15px;
-            padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-            overflow-x: auto;
+        /* منطقة التحكم (VIP و مسح النظام) */
+        .controls-section {
+            display: flex; gap: 20px; padding: 0 30px 20px 30px; flex-wrap: wrap;
         }
+        .control-box {
+            background: white; padding: 20px; border-radius: 15px; flex: 1; min-width: 300px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); border: 1px solid #ecf0f1;
+        }
+        .control-box h3 { margin-top: 0; margin-bottom: 15px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
         
+        .vip-form { display: flex; gap: 10px; flex-wrap: wrap; }
+        .vip-form input {
+            flex: 1; padding: 10px 15px; border: 2px solid #ecf0f1; border-radius: 8px; font-family: inherit;
+        }
+        .btn-vip { background-color: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit; }
+        
+        /* الجدول */
+        .table-container {
+            background: white; margin: 0 30px 30px 30px; border-radius: 15px;
+            padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow-x: auto;
+        }
         .search-bar {
             width: 100%; padding: 12px 15px; font-size: 16px; border: 2px solid #ecf0f1;
             border-radius: 10px; margin-bottom: 20px; font-family: inherit; box-sizing: border-box;
         }
-
         table { width: 100%; border-collapse: collapse; text-align: center; }
-        th, td { padding: 15px; border-bottom: 1px solid #ecf0f1; }
+        th, td { padding: 12px; border-bottom: 1px solid #ecf0f1; font-size: 14px;}
         th { background-color: #f8f9fa; color: #34495e; font-weight: 700; }
         tr:hover { background-color: #fdfefe; }
         
-        .badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .badge { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: 700; }
         .badge-confirmed { background-color: #fef9e7; color: #f39c12; }
         .badge-attended { background-color: #eafaf1; color: #27ae60; }
+        .badge-vip { background-color: #f4ecf7; color: #8e44ad; }
 
         .action-btn {
             background: #3498db; color: white; border: none; padding: 6px 12px;
@@ -77,15 +87,15 @@
         .action-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
 
         @media (max-width: 768px) {
-            .admin-header { flex-direction: column; text-align: center; }
-            .dashboard-stats { padding: 15px; }
-            .table-container { margin: 15px; padding: 10px; }
+            .admin-header, .controls-section { padding: 15px; flex-direction: column; }
+            .dashboard-stats, .table-container { margin: 15px; padding: 15px; }
+            .vip-form { flex-direction: column; }
         }
     </style>
 </head>
 <body>
 
-    <!-- الديف ده مخفي لحد ما يتم إدخال الباسورد الصح -->
+    <!-- الديف ده مخفي لحد إدخال الباسورد -->
     <div id="main-content" style="display: none;">
         <div class="admin-header">
             <h1 class="admin-title">لوحة التحكم ⚙️</h1>
@@ -98,10 +108,14 @@
         <div class="dashboard-stats">
             <div class="stat-card">
                 <h3>إجمالي الحجوزات</h3>
-                <p class="num" id="total-booked">0</p>
+                <p class="num"><span id="total-booked">0</span> / 403</p>
+            </div>
+            <div class="stat-card stat-percentage">
+                <h3>نسبة الإشغال</h3>
+                <p class="num" id="booking-percentage">0%</p>
             </div>
             <div class="stat-card stat-attended">
-                <h3>حضور مؤكد (تم المسح)</h3>
+                <h3>حضور مؤكد</h3>
                 <p class="num" id="total-attended">0</p>
             </div>
             <div class="stat-card stat-pending">
@@ -110,9 +124,24 @@
             </div>
         </div>
 
+        <div class="controls-section">
+            <div class="control-box">
+                <h3>👑 حجز VIP (مباشر من الإدارة)</h3>
+                <div class="vip-form">
+                    <input type="text" id="vip-seat" placeholder="رقم المقعد (مثال: A5)">
+                    <input type="text" id="vip-name" placeholder="اسم الضيف الـ VIP">
+                    <button class="btn-vip" onclick="bookVIP()">تأكيد الحجز</button>
+                </div>
+            </div>
+            <div class="control-box" style="border-color: #fadbd8; background-color: #fdf2e9;">
+                <h3 style="color: #c0392b;">⚠️ منطقة الخطر</h3>
+                <p style="font-size: 13px; color: #7f8c8d; margin-top: 0;">هذا الزر سيقوم بمسح جميع الحجوزات وإعادة تعيين النظام بالكامل.</p>
+                <button class="btn btn-danger" style="width: 100%; justify-content: center;" onclick="wipeSystem()">🗑️ مسح المسرح بالكامل</button>
+            </div>
+        </div>
+
         <div class="table-container">
             <input type="text" id="search-input" class="search-bar" placeholder="🔍 ابحث بالاسم، رقم المقعد، أو الكود..." onkeyup="filterTable()">
-            
             <table id="data-table">
                 <thead>
                     <tr>
@@ -125,7 +154,7 @@
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <!-- البيانات هتنزل هنا -->
+                    <!-- البيانات هنا -->
                 </tbody>
             </table>
         </div>
@@ -133,9 +162,9 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // طلب الباسورد قبل عرض الصفحة
+        // شاشة الباسورد
         Swal.fire({
             title: 'تسجيل الدخول',
             input: 'password',
@@ -146,8 +175,7 @@
             confirmButtonColor: '#2c3e50'
         }).then((result) => {
             if (result.value === 'rave2026') {
-                document.getElementById('main-content').style.display = 'block'; // إظهار المحتوى
-                Swal.fire({ icon: 'success', title: 'مرحباً بك', timer: 1000, showConfirmButton: false });
+                document.getElementById('main-content').style.display = 'block';
             } else {
                 document.body.innerHTML = '<h2 style="text-align:center; margin-top:50px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
             }
@@ -163,19 +191,17 @@
             measurementId: "G-G0SHP0PBR0",
             databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
         };
-        
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         let bookingsData = {};
+        const TOTAL_SEATS = 403;
 
-        // جلب البيانات من فايربيز
         onValue(ref(db, 'bookings'), (snapshot) => {
             bookingsData = snapshot.val() || {};
             renderTable();
         });
 
-        // رسم الجدول وتحديث الإحصائيات
         function renderTable() {
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
@@ -188,12 +214,14 @@
 
                 const tr = document.createElement('tr');
                 
-                // تنسيق الحالة
                 let statusBadge = info.status === 'attended' 
                     ? '<span class="badge badge-attended">حضر ✅</span>' 
                     : '<span class="badge badge-confirmed">في الانتظار ⏳</span>';
 
-                // تنسيق زر الإجراء اليدوي
+                let codeBadge = info.code === 'VIP' 
+                    ? '<span class="badge badge-vip">👑 VIP</span>' 
+                    : info.code;
+
                 let actionBtn = info.status === 'attended'
                     ? `<button class="action-btn" disabled>تم التأكيد</button>`
                     : `<button class="action-btn" onclick="confirmManualAttendance('${seatId}', '${info.name}')">تأكيد الحضور</button>`;
@@ -204,7 +232,7 @@
                 tr.innerHTML = `
                     <td style="font-weight:bold; color:#2980b9;">${seatId}</td>
                     <td>${info.name}</td>
-                    <td>${info.code}</td>
+                    <td>${codeBadge}</td>
                     <td dir="ltr" style="font-size:12px;">${formattedDate}</td>
                     <td>${statusBadge}</td>
                     <td>${actionBtn}</td>
@@ -215,9 +243,12 @@
             document.getElementById('total-booked').innerText = total;
             document.getElementById('total-attended').innerText = attended;
             document.getElementById('total-pending').innerText = pending;
+            
+            // حساب نسبة الإشغال
+            const percentage = ((total / TOTAL_SEATS) * 100).toFixed(1);
+            document.getElementById('booking-percentage').innerText = percentage + '%';
         }
 
-        // دالة تأكيد الحضور اليدوي
         window.confirmManualAttendance = function(seatId, name) {
             Swal.fire({
                 title: 'تأكيد الحضور يدوياً؟',
@@ -226,62 +257,66 @@
                 showCancelButton: true,
                 confirmButtonColor: '#27ae60',
                 cancelButtonColor: '#e74c3c',
-                confirmButtonText: 'نعم، تأكيد دخوله',
-                cancelButtonText: 'إلغاء'
+                confirmButtonText: 'تأكيد', cancelButtonText: 'إلغاء'
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    try {
-                        const updates = {};
-                        updates['/bookings/' + seatId + '/status'] = 'attended';
-                        updates['/bookings/' + seatId + '/attendedAt'] = new Date().toISOString();
-                        
-                        await update(ref(db), updates);
-                        Swal.fire('تم التحديث!', 'تم تسجيل حضور الشخص بنجاح.', 'success');
-                    } catch (error) {
-                        Swal.fire('خطأ', 'حدث مشكلة في الاتصال.', 'error');
-                    }
+                    await update(ref(db), { [`/bookings/${seatId}/status`]: 'attended', [`/bookings/${seatId}/attendedAt`]: new Date().toISOString() });
+                    Swal.fire('تم!', 'تم التسجيل بنجاح.', 'success');
                 }
             });
         }
 
-        // فلترة الجدول (Search)
+        window.bookVIP = async function() {
+            const seat = document.getElementById('vip-seat').value.trim().toUpperCase();
+            const name = document.getElementById('vip-name').value.trim();
+            if (!seat || !name) return Swal.fire('خطأ', 'أدخل المقعد والاسم', 'error');
+
+            const seatRef = ref(db, `bookings/${seat}`);
+            const snap = await get(seatRef);
+            if (snap.exists()) return Swal.fire('عفواً', 'هذا المقعد محجوز بالفعل!', 'warning');
+
+            await update(ref(db), {
+                [`/bookings/${seat}`]: { name: name, code: 'VIP', bookedAt: new Date().toISOString(), status: 'confirmed' }
+            });
+            
+            Swal.fire('تم الحجز', `تم حجز مقعد ${seat} للضيف ${name}`, 'success');
+            document.getElementById('vip-seat').value = '';
+            document.getElementById('vip-name').value = '';
+        }
+
+        window.wipeSystem = function() {
+            Swal.fire({
+                title: 'تحذير شديد الخطورة! 🚨',
+                text: 'هل أنت متأكد أنك تريد مسح جميع الحجوزات وإعادة المسرح للصفر؟ هذا الإجراء لا يمكن التراجع عنه!',
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6',
+                confirmButtonText: 'نعم، امسح كل شيء!', cancelButtonText: 'إلغاء'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await remove(ref(db, 'bookings'));
+                    await remove(ref(db, 'usedCodes'));
+                    await remove(ref(db, 'lockedSeats'));
+                    Swal.fire('تم المسح', 'المسرح الآن فارغ تماماً وجاهز من جديد.', 'success');
+                }
+            });
+        }
+
         window.filterTable = function() {
             const filter = document.getElementById('search-input').value.toUpperCase();
             const trs = document.getElementById('table-body').getElementsByTagName('tr');
             for (let i = 0; i < trs.length; i++) {
-                let tdSeat = trs[i].getElementsByTagName('td')[0];
-                let tdName = trs[i].getElementsByTagName('td')[1];
-                let tdCode = trs[i].getElementsByTagName('td')[2];
-                if (tdSeat || tdName || tdCode) {
-                    let txtValue = (tdSeat.textContent || tdSeat.innerText) + " " + 
-                                   (tdName.textContent || tdName.innerText) + " " + 
-                                   (tdCode.textContent || tdCode.innerText);
-                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                        trs[i].style.display = "";
-                    } else {
-                        trs[i].style.display = "none";
-                    }
-                }
+                let txtValue = trs[i].textContent || trs[i].innerText;
+                trs[i].style.display = txtValue.toUpperCase().indexOf(filter) > -1 ? "" : "none";
             }
         }
 
-        // استخراج البيانات Excel (CSV)
         window.exportCSV = function() {
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // لدعم العربي
-            csvContent += "المقعد,الاسم,الكود,الحالة,تاريخ الحجز\n";
-            
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFFالمقعد,الاسم,الكود,الحالة,تاريخ الحجز\n";
             for (const [seatId, info] of Object.entries(bookingsData)) {
                 let statusAr = info.status === 'attended' ? 'حضر' : 'في الانتظار';
                 csvContent += `${seatId},${info.name},${info.code},${statusAr},${info.bookedAt}\n`;
             }
-            
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "Bookings_Report.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
+            const link = document.createElement("a"); link.href = encodeURI(csvContent);
+            link.download = "Bookings_Report.csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
     </script>
 </body>
