@@ -12,15 +12,17 @@
             margin: 0; color: #2c3e50; 
         }
         
+        /* Layout and Header */
         .admin-header {
             background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 20px 30px;
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            flex-wrap: wrap; gap: 15px;
+            flex-wrap: wrap; gap: 15px; position: relative; z-index: 10;
         }
         .admin-title { margin: 0; font-size: 24px; font-weight: 700; color: #f1c40f; display: flex; align-items: center; gap: 10px; }
         .role-badge { font-size: 12px; background: #e74c3c; color: white; padding: 4px 10px; border-radius: 12px; }
         .header-buttons { display: flex; gap: 10px; flex-wrap: wrap;}
         
+        /* Buttons */
         .btn {
             padding: 10px 20px; border: none; border-radius: 8px; font-family: 'Cairo', sans-serif;
             font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.3s; color: white; text-decoration: none; display: flex; align-items: center; gap: 8px;
@@ -33,7 +35,12 @@
         .btn-print:hover { background-color: #34495e; }
         .btn-danger { background-color: #e74c3c; }
         .btn-danger:hover { background-color: #c0392b; }
+        .btn-tags { background-color: #e67e22; }
+        .btn-tags:hover { background-color: #d35400; }
+        .btn-map { background-color: #f39c12; color: #fff;}
+        .btn-map:hover { background-color: #e67e22; }
 
+        /* Stats */
         .dashboard-stats { display: flex; gap: 20px; padding: 25px 30px; flex-wrap: wrap; justify-content: center; }
         .stat-card {
             background: white; padding: 20px; border-radius: 15px; min-width: 150px; flex: 1;
@@ -45,6 +52,7 @@
         .stat-pending { border-color: #f39c12; }
         .stat-percentage { border-color: #9b59b6; }
 
+        /* Controls Section */
         .controls-section {
             display: flex; gap: 20px; padding: 0 30px 20px 30px; flex-wrap: wrap;
         }
@@ -60,6 +68,7 @@
         }
         .btn-vip { background-color: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit; }
         
+        /* Table */
         .table-container {
             background: white; margin: 0 30px 30px 30px; border-radius: 15px;
             padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow-x: auto;
@@ -73,17 +82,75 @@
         th { background-color: #f8f9fa; color: #34495e; font-weight: 700; }
         tr:hover { background-color: #fdfefe; }
         
+        /* Badges */
         .badge { padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: 700; }
         .badge-confirmed { background-color: #fef9e7; color: #f39c12; }
         .badge-attended { background-color: #eafaf1; color: #27ae60; }
         .badge-vip { background-color: #f4ecf7; color: #8e44ad; }
 
+        /* Action Buttons */
+        .action-btns-group { display: flex; justify-content: center; gap: 5px; flex-wrap: wrap;}
         .action-btn {
             background: #3498db; color: white; border: none; padding: 6px 12px;
             border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
         }
         .action-btn:hover { background: #2980b9; }
         .action-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+        
+        .action-btn-del {
+            background: #e74c3c; color: white; border: none; padding: 6px 12px;
+            border-radius: 6px; cursor: pointer; font-family: inherit; font-size: 12px; font-weight: 600;
+        }
+        .action-btn-del:hover { background: #c0392b; }
+
+        /* Interactive Map Modal */
+        .map-modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center;
+        }
+        .map-container {
+            background: #fff; width: 95%; max-width: 1200px; height: 90vh; border-radius: 15px;
+            padding: 20px; display: flex; flex-direction: column; position: relative; overflow: hidden;
+        }
+        .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; }
+        .map-header h2 { margin: 0; color: #2c3e50; font-size: 20px;}
+        .close-map-btn { background: #e74c3c; color: #fff; border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit;}
+        
+        .map-scroll-area {
+            flex: 1; overflow: auto; background: #fdfbf7; border: 1px solid #ddd; border-radius: 10px; padding: 20px; direction: rtl;
+        }
+        .map-legend { display: flex; justify-content: center; gap: 15px; margin-top: 15px; flex-wrap: wrap; }
+        .map-legend-item { display: flex; align-items: center; gap: 5px; font-size: 14px; font-weight: bold;}
+        .map-legend-box { width: 20px; height: 20px; border-radius: 4px; border: 1px solid #ccc; }
+
+        /* Theater Layout Classes */
+        .stage-top { background: linear-gradient(145deg, #8d6e63, #5d4037); color: #ffecb3; font-size: 24px; font-weight: 700; padding: 15px; margin: 0 auto 30px auto; border-radius: 8px 8px 40px 40px; text-align: center; width: 80%; letter-spacing: 2px; }
+        .seating-area { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 1000px; padding-bottom: 20px;}
+        .row { display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .seat-group { display: flex; gap: 4px; }
+        .seat { 
+            width: 30px; height: 30px; border: 1px solid #bcbcbc; border-radius: 6px; display: flex; 
+            justify-content: center; align-items: center; font-size: 11px; font-weight: 700; color: #444; 
+            background: #f0f0f0; transition: 0.2s; position: relative; cursor: help; flex-shrink: 0;
+        }
+        .row-label { width: 30px; height: 30px; background: #34495e; color: white; font-weight: 700; display: flex; justify-content: center; align-items: center; border-radius: 4px; font-size: 12px; flex-shrink: 0;}
+        
+        /* Seat Statuses in Map */
+        .seat.map-empty { background: linear-gradient(145deg, #f0f0f0, #cacaca); }
+        .seat.map-pending { background: linear-gradient(145deg, #f1c40f, #f39c12); color: white; border-color: #e67e22; }
+        .seat.map-attended { background: linear-gradient(145deg, #4CAF50, #2E7D32); color: white; border-color: #1B5E20; }
+        .seat.map-vip { background: linear-gradient(145deg, #9b59b6, #8e44ad); color: white; border-color: #732d91; }
+        .seat.hidden-seat { background: transparent; color: transparent; border: none; pointer-events: none; }
+        .seat.empty-x { background: #eceff1; color: #b0bec5; border-color: #cfd8dc; pointer-events: none; }
+        .seat.mixer-block { width: 132px; background: #2c3e50; color: #f1c40f; font-size: 12px; pointer-events: none; border-color: #111;}
+        
+        /* Tooltip */
+        .seat::after {
+            content: attr(data-info); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
+            background: rgba(33, 47, 61, 0.95); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
+            opacity: 0; visibility: hidden; pointer-events: none; z-index: 100; font-family: 'Cairo', sans-serif;
+        }
+        .seat:hover::after { opacity: 1; visibility: visible; }
 
         @media (max-width: 768px) {
             .admin-header, .controls-section { padding: 15px; flex-direction: column; }
@@ -101,14 +168,17 @@
                 <span id="role-badge" class="role-badge">Admin</span>
             </h1>
             <div class="header-buttons">
+                <!-- أزرار متوفرة للأدمن والأمن -->
                 <button class="btn btn-scanner" onclick="window.location.href='Scanner.html'">📷 ماسح التذاكر</button>
-                <button class="btn btn-print" onclick="printGuestList()">🖨️ طباعة الكشف</button>
-                <!-- زرار الإكسيل مخفي افتراضياً للأمن وهيظهر للأدمن بس -->
+                
+                <!-- أزرار خاصة بالأدمن فقط -->
+                <button id="btn-map" class="btn btn-map" onclick="openMap()" style="display: none;">🗺️ الخريطة المباشرة</button>
+                <button id="btn-tags" class="btn btn-tags" onclick="printNameTags()" style="display: none;">🎫 طباعة البادجات (VIP)</button>
+                <button id="btn-print" class="btn btn-print" onclick="printGuestList()" style="display: none;">🖨️ طباعة الكشف</button>
                 <button id="btn-export" class="btn btn-export" onclick="exportCSV()" style="display: none;">📊 تحميل Excel</button>
             </div>
         </div>
 
-        <!-- قسم الإحصائيات (مخفي للأمن) -->
         <div id="admin-stats" class="dashboard-stats" style="display: none;">
             <div class="stat-card">
                 <h3>إجمالي الحجوزات</h3>
@@ -128,7 +198,6 @@
             </div>
         </div>
 
-        <!-- قسم التحكم الخطر (مخفي للأمن) -->
         <div id="admin-controls" class="controls-section" style="display: none;">
             <div class="control-box">
                 <h3>👑 حجز VIP (مباشر من الإدارة)</h3>
@@ -165,31 +234,56 @@
         </div>
     </div>
 
+    <!-- نافذة الخريطة التفاعلية -->
+    <div id="map-modal" class="map-modal">
+        <div class="map-container">
+            <div class="map-header">
+                <h2>🗺️ خريطة المسرح التفاعلية (Live)</h2>
+                <button class="close-map-btn" onclick="closeMap()">إغلاق ✖</button>
+            </div>
+            <div class="map-scroll-area" id="map-scroll-area">
+                <div class="stage-top">خشبة المسرح</div>
+                <div id="map-seating-area" class="seating-area" dir="ltr"></div>
+            </div>
+            <div class="map-legend" dir="rtl">
+                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #f0f0f0, #cacaca);"></div> متاح</div>
+                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #f1c40f, #f39c12);"></div> محجوز (لم يحضر)</div>
+                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #4CAF50, #2E7D32);"></div> حضر بالفعل</div>
+                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #9b59b6, #8e44ad);"></div> VIP</div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // تحديد الهوية بناءً على كلمة المرور
+        let currentRole = 'usher'; 
+
+        // تحديد الهوية بناءً على كلمة المرور الجديدة
         Swal.fire({
             title: 'تسجيل الدخول', input: 'password', inputPlaceholder: 'أدخل كلمة المرور...',
             allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#2c3e50'
         }).then((result) => {
             const pwd = result.value;
-            // تحديث الباسوردات هنا بناءً على طلبك
             if (pwd === 'avatege2019') {
-                // مدير عام (Super Admin)
+                currentRole = 'admin';
                 document.getElementById('main-content').style.display = 'block';
                 document.getElementById('admin-stats').style.display = 'flex';
                 document.getElementById('admin-controls').style.display = 'flex';
                 document.getElementById('btn-export').style.display = 'flex';
-                document.getElementById('role-badge').innerText = 'Super Admin';
+                document.getElementById('btn-print').style.display = 'flex';
+                document.getElementById('btn-tags').style.display = 'flex';
+                document.getElementById('btn-map').style.display = 'flex';
+                document.getElementById('role-badge').innerText = 'الإدارة العليا';
                 document.getElementById('role-badge').style.background = '#e74c3c';
+                renderTable(); 
             } else if (pwd === 'tanzem1') {
-                // موظف أمن / تنظيم (Usher)
+                currentRole = 'usher';
                 document.getElementById('main-content').style.display = 'block';
                 document.getElementById('role-badge').innerText = 'فريق التنظيم';
                 document.getElementById('role-badge').style.background = '#3498db';
-                // الإحصائيات والتحكم وزر الإكسيل هتفضل مخفية
+                renderTable();
             } else {
                 document.body.innerHTML = '<h2 style="text-align:center; margin-top:50px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
             }
@@ -211,6 +305,27 @@
         let bookingsData = {};
         const TOTAL_SEATS = 403;
 
+        const theaterLayout = [
+            { row: 'A', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,-1] },
+            { row: 'B', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'C', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'D', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,0] },
+            { row: 'E', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'F', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'G', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,-1] },
+            { row: 'H', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,0] },
+            { row: 'I', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'J', farOdd: ['MIXER'],     mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'K', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,0] },
+            { row: 'L', farOdd: [0,21,19,17],  mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,0] },
+            { row: 'M', farOdd: [23,21,19,17], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'N', farOdd: [23,21,19,17], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'O', farOdd: [0,21,19,17],  mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,0] },
+            { row: 'P', farOdd: [0,21,19,17],  mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,0] },
+            { row: 'Q', farOdd: [23,21,19,17], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
+            { row: 'R', farOdd: [23,21,19,17], mainOdd: [0,0,0,9,7,5,3,1],    mainEven: [2,4,6,8,10,0,0],   farEven: [16,18,20,22] }
+        ];
+
         function getSortedSeats() {
             return Object.keys(bookingsData).sort((a, b) => {
                 return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
@@ -220,6 +335,9 @@
         onValue(ref(db, 'bookings'), (snapshot) => {
             bookingsData = snapshot.val() || {};
             renderTable();
+            if (document.getElementById('map-modal').style.display === 'flex') {
+                renderMap();
+            }
         });
 
         function renderTable() {
@@ -244,9 +362,17 @@
                     ? '<span class="badge badge-vip">👑 VIP</span>' 
                     : info.code;
 
-                let actionBtn = info.status === 'attended'
+                let confirmBtn = info.status === 'attended'
                     ? `<button class="action-btn" disabled>تم التأكيد</button>`
-                    : `<button class="action-btn" onclick="confirmManualAttendance('${seatId}', '${info.name}')">تأكيد الحضور</button>`;
+                    : `<button class="action-btn" onclick="confirmManualAttendance('${seatId}', '${info.name}')">تأكيد حضور</button>`;
+                
+                let cancelBtn = '';
+                // زرار الإلغاء هيظهر للأدمن بس
+                if (currentRole === 'admin') {
+                    cancelBtn = `<button class="action-btn-del" onclick="cancelBooking('${seatId}', '${info.name}', '${info.code}')">إلغاء 🗑️</button>`;
+                }
+
+                let actionsHtml = `<div class="action-btns-group">${confirmBtn}${cancelBtn}</div>`;
 
                 const dateObj = new Date(info.bookedAt);
                 const formattedDate = dateObj.toLocaleDateString('ar-EG') + ' ' + dateObj.toLocaleTimeString('ar-EG');
@@ -257,7 +383,7 @@
                     <td>${codeBadge}</td>
                     <td dir="ltr" style="font-size:12px;">${formattedDate}</td>
                     <td>${statusBadge}</td>
-                    <td>${actionBtn}</td>
+                    <td>${actionsHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -268,6 +394,30 @@
             
             const percentage = ((total / TOTAL_SEATS) * 100).toFixed(1);
             document.getElementById('booking-percentage').innerText = percentage + '%';
+        }
+
+        // --- الإلغاء الفردي للحجز ---
+        window.cancelBooking = function(seatId, name, code) {
+            Swal.fire({
+                title: 'إلغاء الحجز؟',
+                html: `هل أنت متأكد من إلغاء حجز المقعد <b>${seatId}</b> الخاص بـ <b>${name}</b>؟<br><br><span style="color:red; font-size:13px;">سيتم تحرير المقعد وجعله متاحاً للحجز مرة أخرى.</span>`,
+                icon: 'warning', showCancelButton: true, confirmButtonColor: '#e74c3c', cancelButtonColor: '#95a5a6',
+                confirmButtonText: 'نعم، قم بالإلغاء', cancelButtonText: 'تراجع'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const updates = {};
+                        updates[`/bookings/${seatId}`] = null; 
+                        if (code !== 'VIP') {
+                            updates[`/usedCodes/${code}`] = null; 
+                        }
+                        await update(ref(db), updates);
+                        Swal.fire('تم الإلغاء', 'تم تحرير المقعد بنجاح.', 'success');
+                    } catch (e) {
+                        Swal.fire('خطأ', 'حدث خطأ أثناء الإلغاء.', 'error');
+                    }
+                }
+            });
         }
 
         window.confirmManualAttendance = function(seatId, name) {
@@ -401,6 +551,129 @@
             printWindow.document.close();
             
             setTimeout(() => { printWindow.print(); }, 500);
+        }
+
+        // --- طباعة بطاقات الـ VIP ---
+        window.printNameTags = function() {
+            const vipSeats = getSortedSeats().filter(seatId => bookingsData[seatId].code === 'VIP');
+            
+            if (vipSeats.length === 0) {
+                return Swal.fire('عفواً', 'لا يوجد حجوزات VIP لطباعة بطاقات لها.', 'info');
+            }
+
+            let printContent = `
+                <html dir="rtl">
+                <head>
+                    <title>طباعة بطاقات VIP</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Cairo', sans-serif; padding: 0; margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; background: #fff;}
+                        .badge-card {
+                            width: 9cm; height: 6cm; border: 2px dashed #95a5a6; border-radius: 10px;
+                            display: flex; flex-direction: column; align-items: center; justify-content: center;
+                            background: linear-gradient(to bottom, #fdfbf7, #fff); position: relative; overflow: hidden;
+                        }
+                        .badge-header { background: #2c3e50; color: #f1c40f; width: 100%; text-align: center; padding: 10px 0; font-weight: bold; position: absolute; top: 0; font-size: 16px;}
+                        .badge-name { font-size: 24px; font-weight: bold; color: #2c3e50; margin-top: 30px; text-align: center; padding: 0 10px;}
+                        .badge-role { font-size: 18px; color: #e74c3c; font-weight: bold; margin-top: 10px; border-bottom: 2px solid #e74c3c; padding-bottom: 5px;}
+                        .badge-seat { font-size: 20px; color: #2980b9; font-weight: bold; margin-top: 10px; }
+                        .badge-footer { font-size: 12px; color: #7f8c8d; position: absolute; bottom: 8px; }
+                        @media print {
+                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                            .badge-card { page-break-inside: avoid; margin-bottom: 20px; }
+                        }
+                    </style>
+                </head>
+                <body>
+            `;
+
+            vipSeats.forEach(seatId => {
+                const info = bookingsData[seatId];
+                printContent += `
+                    <div class="badge-card">
+                        <div class="badge-header">مسرح المقر البابوي 🎭</div>
+                        <div class="badge-name">${info.name}</div>
+                        <div class="badge-role">VIP GUEST</div>
+                        <div class="badge-seat">مقعد رقم: ${seatId}</div>
+                        <div class="badge-footer">Rave Technology</div>
+                    </div>
+                `;
+            });
+
+            printContent += `</body></html>`;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            setTimeout(() => { printWindow.print(); }, 500);
+        }
+
+        // --- الخريطة التفاعلية للمسرح ---
+        window.openMap = function() {
+            document.getElementById('map-modal').style.display = 'flex';
+            renderMap();
+        }
+        window.closeMap = function() {
+            document.getElementById('map-modal').style.display = 'none';
+        }
+
+        function renderMap() {
+            const mapArea = document.getElementById('map-seating-area');
+            mapArea.innerHTML = '';
+
+            theaterLayout.forEach(rowData => {
+                const rowDiv = document.createElement('div'); rowDiv.className = 'row';
+                
+                const farOddGroup = document.createElement('div'); farOddGroup.className = 'seat-group';
+                rowData.farOdd.forEach(num => farOddGroup.appendChild(createMapSeat(rowData.row, num)));
+                rowDiv.appendChild(farOddGroup);
+
+                const leftAisle = document.createElement('div'); leftAisle.className = 'row-label'; leftAisle.innerText = rowData.row;
+                rowDiv.appendChild(leftAisle);
+
+                const mainOddGroup = document.createElement('div'); mainOddGroup.className = 'seat-group';
+                rowData.mainOdd.forEach(num => mainOddGroup.appendChild(createMapSeat(rowData.row, num)));
+                rowDiv.appendChild(mainOddGroup);
+
+                const mainEvenGroup = document.createElement('div'); mainEvenGroup.className = 'seat-group';
+                rowData.mainEven.forEach(num => mainEvenGroup.appendChild(createMapSeat(rowData.row, num)));
+                rowDiv.appendChild(mainEvenGroup);
+
+                const rightAisle = document.createElement('div'); rightAisle.className = 'row-label'; rightAisle.innerText = rowData.row;
+                rowDiv.appendChild(rightAisle);
+
+                const farEvenGroup = document.createElement('div'); farEvenGroup.className = 'seat-group';
+                rowData.farEven.forEach(num => farEvenGroup.appendChild(createMapSeat(rowData.row, num)));
+                rowDiv.appendChild(farEvenGroup);
+
+                mapArea.appendChild(rowDiv);
+            });
+        }
+
+        function createMapSeat(row, num) {
+            const seat = document.createElement('div');
+            if (num === -1) { seat.className = 'seat hidden-seat'; return seat; }
+            if (num === 0) { seat.className = 'seat empty-x'; seat.innerText = 'X'; return seat; }
+            if (num === 'MIXER') { seat.className = 'seat mixer-block'; seat.innerText = 'ميكسر'; return seat; }
+
+            const seatId = `${row}${num}`;
+            seat.className = 'seat map-empty';
+            seat.innerText = num;
+            seat.setAttribute('data-info', `مقعد ${seatId} - متاح`);
+
+            if (bookingsData[seatId]) {
+                const info = bookingsData[seatId];
+                if (info.code === 'VIP') {
+                    seat.className = 'seat map-vip';
+                    seat.setAttribute('data-info', `VIP: ${info.name}`);
+                } else if (info.status === 'attended') {
+                    seat.className = 'seat map-attended';
+                    seat.setAttribute('data-info', `حضر: ${info.name}`);
+                } else {
+                    seat.className = 'seat map-pending';
+                    seat.setAttribute('data-info', `محجوز: ${info.name}`);
+                }
+            }
+            return seat;
         }
     </script>
 </body>
