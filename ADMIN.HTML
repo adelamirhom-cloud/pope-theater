@@ -29,6 +29,8 @@
         .btn-scanner:hover { background-color: #8e44ad; }
         .btn-export { background-color: #27ae60; }
         .btn-export:hover { background-color: #2ecc71; }
+        .btn-print { background-color: #5d6d7e; }
+        .btn-print:hover { background-color: #34495e; }
         .btn-danger { background-color: #e74c3c; }
         .btn-danger:hover { background-color: #c0392b; }
 
@@ -95,12 +97,12 @@
 </head>
 <body>
 
-    <!-- الديف ده مخفي لحد إدخال الباسورد -->
     <div id="main-content" style="display: none;">
         <div class="admin-header">
             <h1 class="admin-title">لوحة التحكم ⚙️</h1>
             <div class="header-buttons">
                 <button class="btn btn-scanner" onclick="window.location.href='Scanner.html'">📷 ماسح التذاكر</button>
+                <button class="btn btn-print" onclick="printGuestList()">🖨️ طباعة الكشف</button>
                 <button class="btn btn-export" onclick="exportCSV()">📊 تحميل Excel</button>
             </div>
         </div>
@@ -244,7 +246,6 @@
             document.getElementById('total-attended').innerText = attended;
             document.getElementById('total-pending').innerText = pending;
             
-            // حساب نسبة الإشغال
             const percentage = ((total / TOTAL_SEATS) * 100).toFixed(1);
             document.getElementById('booking-percentage').innerText = percentage + '%';
         }
@@ -253,10 +254,7 @@
             Swal.fire({
                 title: 'تأكيد الحضور يدوياً؟',
                 text: `هل أنت متأكد من إثبات حضور "${name}" لمقعد ${seatId}؟`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#27ae60',
-                cancelButtonColor: '#e74c3c',
+                icon: 'question', showCancelButton: true, confirmButtonColor: '#27ae60', cancelButtonColor: '#e74c3c',
                 confirmButtonText: 'تأكيد', cancelButtonText: 'إلغاء'
             }).then(async (result) => {
                 if (result.isConfirmed) {
@@ -280,22 +278,18 @@
             });
             
             Swal.fire('تم الحجز', `تم حجز مقعد ${seat} للضيف ${name}`, 'success');
-            document.getElementById('vip-seat').value = '';
-            document.getElementById('vip-name').value = '';
+            document.getElementById('vip-seat').value = ''; document.getElementById('vip-name').value = '';
         }
 
         window.wipeSystem = function() {
             Swal.fire({
-                title: 'تحذير شديد الخطورة! 🚨',
-                text: 'هل أنت متأكد أنك تريد مسح جميع الحجوزات وإعادة المسرح للصفر؟ هذا الإجراء لا يمكن التراجع عنه!',
+                title: 'تحذير شديد الخطورة! 🚨', text: 'هل أنت متأكد أنك تريد مسح جميع الحجوزات وإعادة المسرح للصفر؟',
                 icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#3085d6',
                 confirmButtonText: 'نعم، امسح كل شيء!', cancelButtonText: 'إلغاء'
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    await remove(ref(db, 'bookings'));
-                    await remove(ref(db, 'usedCodes'));
-                    await remove(ref(db, 'lockedSeats'));
-                    Swal.fire('تم المسح', 'المسرح الآن فارغ تماماً وجاهز من جديد.', 'success');
+                    await remove(ref(db, 'bookings')); await remove(ref(db, 'usedCodes')); await remove(ref(db, 'lockedSeats'));
+                    Swal.fire('تم المسح', 'المسرح الآن فارغ تماماً.', 'success');
                 }
             });
         }
@@ -317,6 +311,80 @@
             }
             const link = document.createElement("a"); link.href = encodeURI(csvContent);
             link.download = "Bookings_Report.csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        // دالة طباعة كشف الحضور
+        window.printGuestList = function() {
+            if (Object.keys(bookingsData).length === 0) {
+                return Swal.fire('عفواً', 'لا يوجد حجوزات لطباعتها حتى الآن.', 'info');
+            }
+
+            // ترتيب البيانات أبجدياً حسب رقم المقعد (A1, A2... B1...)
+            const sortedSeats = Object.keys(bookingsData).sort();
+
+            let printContent = `
+                <html>
+                <head>
+                    <title>كشف حضور مسرح المقر البابوي</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; direction: rtl; padding: 20px; }
+                        h2 { text-align: center; color: #2c3e50; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
+                        th, td { border: 1px solid #000; padding: 10px; text-align: center; }
+                        th { background-color: #f2f2f2; font-weight: bold; }
+                        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #555; }
+                    </style>
+                </head>
+                <body>
+                    <h2>📋 كشف حضور مسرح المقر البابوي (22 سبتمبر 2026)</h2>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم المقعد</th>
+                                <th>اسم الحاجز</th>
+                                <th>الكود / نوع الحجز</th>
+                                <th>التوقيع (للمطابقة اليدوية)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            let counter = 1;
+            sortedSeats.forEach(seatId => {
+                const info = bookingsData[seatId];
+                printContent += `
+                    <tr>
+                        <td>${counter++}</td>
+                        <td style="font-weight: bold; font-size: 16px;">${seatId}</td>
+                        <td>${info.name}</td>
+                        <td>${info.code === 'VIP' ? 'VIP 👑' : info.code}</td>
+                        <td></td>
+                    </tr>
+                `;
+            });
+
+            printContent += `
+                        </tbody>
+                    </table>
+                    <div class="footer">
+                        تم إنشاء هذا الكشف بواسطة نظام <strong>Rave Technology</strong> - إجمالي الحجوزات: ${counter - 1}
+                    </div>
+                </body>
+                </html>
+            `;
+
+            // فتح نافذة جديدة للطباعة
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            // تأخير بسيط لضمان تحميل المحتوى قبل الطباعة
+            setTimeout(() => {
+                printWindow.print();
+                // اختياري: إغلاق النافذة بعد الطباعة
+                // printWindow.close(); 
+            }, 500);
         }
     </script>
 </body>
