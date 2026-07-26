@@ -6,22 +6,17 @@
     <title>نقطة البيع (POS) | مسرح المقر البابوي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- مكتبة توليد الـ QR Code للتذاكر -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         :root { --primary: #2c3e50; --secondary: #34495e; --accent: #f1c40f; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: 'Cairo', sans-serif; background-color: #ecf0f1; margin: 0; color: #333; height: 100vh; overflow: hidden; }
         
-        /* Header */
         .pos-header { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .pos-title { margin: 0; font-size: 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
         .cashier-badge { background: #3498db; color: white; font-size: 12px; padding: 4px 10px; border-radius: 20px; }
 
-        /* Main Layout */
         .pos-layout { display: flex; height: calc(100vh - 65px); }
         
-        /* Left: Map Area */
         .map-section { flex: 2; background: #fff; overflow-y: auto; padding: 20px; border-left: 2px solid #ddd; }
         .stage-top { background: linear-gradient(145deg, #8d6e63, #5d4037); color: #ffecb3; font-size: 20px; font-weight: 700; padding: 10px; margin: 0 auto 20px auto; border-radius: 8px 8px 30px 30px; text-align: center; width: 70%; letter-spacing: 2px; }
         .seating-area { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 800px; padding-bottom: 50px; direction: ltr;}
@@ -31,14 +26,12 @@
         .seat:hover:not(.booked):not(.hidden-seat):not(.empty-x) { background: #e0e0e0; transform: scale(1.1); }
         .row-label { width: 32px; height: 32px; background: var(--secondary); color: white; font-weight: 700; display: flex; justify-content: center; align-items: center; border-radius: 4px; font-size: 12px; }
         
-        /* Seat States */
         .seat.booked { background: var(--danger); color: white; border-color: #c0392b; cursor: not-allowed; opacity: 0.8; }
         .seat.selected { background: #3498db; color: white; border-color: #2980b9; box-shadow: 0 0 8px rgba(52, 152, 219, 0.6); transform: scale(1.1); }
         .seat.hidden-seat { background: transparent; border: none; pointer-events: none; }
         .seat.empty-x { background: #eceff1; color: transparent; border-color: #cfd8dc; pointer-events: none; }
         .seat.mixer-block { width: 140px; background: var(--primary); color: var(--accent); font-size: 12px; pointer-events: none; }
 
-        /* Right: Cart/Invoice Area */
         .cart-section { flex: 1; background: #fdfbf7; display: flex; flex-direction: column; padding: 20px; min-width: 300px; box-shadow: -2px 0 10px rgba(0,0,0,0.05); z-index: 5; }
         .cart-header { border-bottom: 2px dashed #ccc; padding-bottom: 10px; margin-bottom: 15px; }
         .cart-header h3 { margin: 0; color: var(--primary); }
@@ -59,7 +52,6 @@
         .btn-checkout:hover { background: #2ecc71; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4); }
         .btn-checkout:disabled { background: #95a5a6; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* Printable Receipt (Thermal POS format 80mm) */
         #printable-receipts { display: none; }
         @media print {
             body * { visibility: hidden; }
@@ -69,8 +61,7 @@
             .ticket-print { width: 75mm; margin: 0 auto 10mm auto; padding: 5mm; text-align: center; font-family: 'Cairo', sans-serif; border-bottom: 2px dashed #000; page-break-after: always; }
             .ticket-print h2 { margin: 0 0 5px 0; font-size: 16px; border-bottom: 1px solid #000; padding-bottom: 5px; }
             .ticket-print .seat-num { font-size: 24px; font-weight: bold; margin: 5px 0; }
-            .ticket-print .qr-box { margin: 10px auto; display: flex; justify-content: center; }
-            .ticket-print .qr-box img { width: 40mm; height: 40mm; }
+            .ticket-print .code-text { font-size: 14px; font-weight: bold; font-family: monospace; background: #eee; padding: 4px; margin: 5px 0; display: inline-block; border: 1px solid #999;}
             .ticket-print .info { font-size: 12px; margin: 2px 0; }
             .ticket-print .footer { font-size: 10px; margin-top: 10px; font-weight: bold;}
         }
@@ -78,25 +69,17 @@
 </head>
 <body>
 
-    <!-- Login Screen Cover -->
-    <div id="login-cover" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <h2 style="color:#2c3e50;">جاري التحقق...</h2>
-    </div>
-
-    <!-- POS Main Interface -->
     <div class="pos-header">
         <h1 class="pos-title">نقطة البيع (شباك التذاكر) <span class="cashier-badge">Live POS</span></h1>
         <div style="font-size: 14px; font-weight: bold; color: #ecf0f1;">Rave Technology Solutions</div>
     </div>
 
     <div class="pos-layout">
-        <!-- الخريطة -->
         <div class="map-section">
             <div class="stage-top">خشبة المسرح</div>
             <div id="map-seating-area" class="seating-area"></div>
         </div>
 
-        <!-- سلة الحجز والفاتورة -->
         <div class="cart-section">
             <div class="cart-header">
                 <h3>🛒 المقاعد المحددة</h3>
@@ -107,7 +90,7 @@
             </div>
 
             <div class="customer-info">
-                <input type="text" id="customer-name" placeholder="اسم العميل (اختياري، الافتراضي: ضيف كاش)">
+                <input type="text" id="customer-name" placeholder="اسم العميل (اختياري)">
             </div>
 
             <div class="cart-summary">
@@ -121,43 +104,29 @@
         </div>
     </div>
 
-    <!-- الحاوية المخفية لطباعة التذاكر الحرارية -->
     <div id="printable-receipts"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Password Check
+        // طلب الباسورد المباشر
         Swal.fire({
             title: 'دخول الكاشير', input: 'password', inputPlaceholder: 'كلمة مرور الـ POS',
             allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#2c3e50'
         }).then((result) => {
             if (result.value === 'cashier2026') {
-                document.getElementById('login-cover').style.display = 'none';
+                // تمام الباسورد صح، ابدأ شغل التطبيق
+                initApp();
             } else {
-                document.getElementById('login-cover').innerHTML = '<h2 style="color:#e74c3c;">خطأ في الصلاحيات. قم بتحديث الصفحة.</h2>';
+                document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
             }
         });
 
-        // Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
-            authDomain: "test-49b8c.firebaseapp.com",
-            projectId: "test-49b8c",
-            storageBucket: "test-49b8c.firebasestorage.app",
-            messagingSenderId: "658085082590",
-            appId: "1:658085082590:web:632f798dca5a87e2da994f",
-            measurementId: "G-G0SHP0PBR0",
-            databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
-        };
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
+        let db;
         let bookingsData = {};
         let selectedSeats = [];
 
-        // Theater Layout
         const theaterLayout = [
             { row: 'A', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,-1] },
             { row: 'B', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
@@ -179,16 +148,28 @@
             { row: 'R', farOdd: [23,21,19,17], mainOdd: [0,0,0,9,7,5,3,1],    mainEven: [2,4,6,8,10,0,0],   farEven: [16,18,20,22] }
         ];
 
-        // جلب البيانات لحظياً
-        onValue(ref(db, 'bookings'), (snapshot) => {
-            bookingsData = snapshot.val() || {};
-            // تنظيف السلة لو مقعد اتحدد وكاشير تاني حجزه
-            selectedSeats = selectedSeats.filter(seat => !bookingsData[seat]);
-            renderMap();
-            updateCartUI();
-        });
+        function initApp() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
+                authDomain: "test-49b8c.firebaseapp.com",
+                projectId: "test-49b8c",
+                storageBucket: "test-49b8c.firebasestorage.app",
+                messagingSenderId: "658085082590",
+                appId: "1:658085082590:web:632f798dca5a87e2da994f",
+                measurementId: "G-G0SHP0PBR0",
+                databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
+            };
+            const app = initializeApp(firebaseConfig);
+            db = getDatabase(app);
 
-        // رسم الخريطة
+            onValue(ref(db, 'bookings'), (snapshot) => {
+                bookingsData = snapshot.val() || {};
+                selectedSeats = selectedSeats.filter(seat => !bookingsData[seat]);
+                renderMap();
+                updateCartUI();
+            });
+        }
+
         function renderMap() {
             const mapArea = document.getElementById('map-seating-area');
             mapArea.innerHTML = '';
@@ -230,7 +211,6 @@
 
             const seatId = `${row}${num}`;
             seat.innerText = num;
-            seat.id = `seat-${seatId}`;
             
             if (bookingsData[seatId]) {
                 seat.className = 'seat booked';
@@ -244,7 +224,6 @@
             return seat;
         }
 
-        // اختيار وإلغاء الكراسي
         window.toggleSeat = function(seatId) {
             if (selectedSeats.includes(seatId)) {
                 selectedSeats = selectedSeats.filter(id => id !== seatId);
@@ -259,7 +238,6 @@
             toggleSeat(seatId);
         }
 
-        // تحديث سلة الحجز
         function updateCartUI() {
             const cartItemsDiv = document.getElementById('cart-items');
             const totalCount = document.getElementById('total-count');
@@ -270,7 +248,6 @@
                 checkoutBtn.disabled = true;
             } else {
                 cartItemsDiv.innerHTML = '';
-                // الترتيب الأبجدي للسلة
                 selectedSeats.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).forEach(seatId => {
                     cartItemsDiv.innerHTML += `
                         <div class="cart-item">
@@ -284,7 +261,6 @@
             totalCount.innerText = selectedSeats.length;
         }
 
-        // وظيفة تأكيد الحجز والطباعة
         window.checkout = async function() {
             if (selectedSeats.length === 0) return;
 
@@ -298,15 +274,13 @@
                 confirmButtonColor: '#27ae60'
             }).then(async (result) => {
                 if (result.isConfirmed) {
-                    
                     Swal.fire({title: 'جاري الحفظ وتجهيز الطباعة...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
                     
                     try {
                         const updates = {};
-                        const printData = []; // داتا التذاكر اللي هتطبع
+                        const printData = [];
 
                         selectedSeats.forEach(seatId => {
-                            // توليد كود POS عشوائي لكل تذكرة
                             const randomCode = 'POS-' + Math.random().toString(36).substr(2, 5).toUpperCase();
                             
                             updates[`/bookings/${seatId}`] = {
@@ -320,19 +294,15 @@
                             printData.push({ seat: seatId, code: randomCode, name: custName });
                         });
 
-                        // رفع للداتا بيز
                         await update(ref(db), updates);
-                        
-                        // تجهيز الطباعة
                         generateThermalReceipts(printData);
                         
-                        // تنظيف بعد النجاح
                         selectedSeats = [];
                         document.getElementById('customer-name').value = '';
                         updateCartUI();
                         
                         Swal.fire('تم بنجاح!', 'تم حفظ الحجز وتجهيز التذاكر.', 'success').then(() => {
-                            window.print(); // فتح نافذة الطباعة فوراً
+                            window.print();
                         });
 
                     } catch (error) {
@@ -342,36 +312,24 @@
             });
         }
 
-        // توليد التذاكر الحرارية بالـ QR Code
         function generateThermalReceipts(tickets) {
             const printContainer = document.getElementById('printable-receipts');
-            printContainer.innerHTML = ''; // تنظيف القديم
+            printContainer.innerHTML = '';
 
-            tickets.forEach((ticket, index) => {
+            tickets.forEach((ticket) => {
                 const ticketDiv = document.createElement('div');
                 ticketDiv.className = 'ticket-print';
                 
-                const qrDivId = `qr-print-${index}`;
-
                 ticketDiv.innerHTML = `
                     <h2>🎭 مسرح المقر البابوي</h2>
                     <div class="info">تذكرة دخول - ${new Date().toLocaleDateString('ar-EG')}</div>
                     <div class="seat-num">المقعد: ${ticket.seat}</div>
                     <div class="info">الاسم: ${ticket.name}</div>
-                    <div class="qr-box" id="${qrDivId}"></div>
-                    <div class="info" style="font-family:monospace;">${ticket.code}</div>
+                    <div class="code-text">${ticket.code}</div>
+                    <div class="info">أظهر هذا الكود عند البوابة</div>
                     <div class="footer">Powered by Rave Technology</div>
                 `;
-                
                 printContainer.appendChild(ticketDiv);
-
-                // رسم الـ QR Code داخل التذكرة
-                new QRCode(document.getElementById(qrDivId), {
-                    text: ticket.code,
-                    width: 120, height: 120,
-                    colorDark : "#000000", colorLight : "#ffffff",
-                    correctLevel : QRCode.CorrectLevel.M
-                });
             });
         }
     </script>
