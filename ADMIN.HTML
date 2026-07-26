@@ -12,7 +12,6 @@
             margin: 0; color: #2c3e50; 
         }
         
-        /* الهيدر */
         .admin-header {
             background: linear-gradient(135deg, #2c3e50, #34495e); color: white; padding: 20px 30px;
             display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
@@ -34,7 +33,6 @@
         .btn-danger { background-color: #e74c3c; }
         .btn-danger:hover { background-color: #c0392b; }
 
-        /* الإحصائيات */
         .dashboard-stats { display: flex; gap: 20px; padding: 25px 30px; flex-wrap: wrap; justify-content: center; }
         .stat-card {
             background: white; padding: 20px; border-radius: 15px; min-width: 150px; flex: 1;
@@ -46,7 +44,6 @@
         .stat-pending { border-color: #f39c12; }
         .stat-percentage { border-color: #9b59b6; }
 
-        /* منطقة التحكم (VIP و مسح النظام) */
         .controls-section {
             display: flex; gap: 20px; padding: 0 30px 20px 30px; flex-wrap: wrap;
         }
@@ -62,7 +59,6 @@
         }
         .btn-vip { background-color: #f39c12; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; font-family: inherit; }
         
-        /* الجدول */
         .table-container {
             background: white; margin: 0 30px 30px 30px; border-radius: 15px;
             padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow-x: auto;
@@ -166,21 +162,12 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update, get, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // شاشة الباسورد
         Swal.fire({
-            title: 'تسجيل الدخول',
-            input: 'password',
-            inputPlaceholder: 'أدخل كلمة المرور...',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            confirmButtonText: 'دخول',
-            confirmButtonColor: '#2c3e50'
+            title: 'تسجيل الدخول', input: 'password', inputPlaceholder: 'أدخل كلمة المرور...',
+            allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#2c3e50'
         }).then((result) => {
-            if (result.value === 'rave2026') {
-                document.getElementById('main-content').style.display = 'block';
-            } else {
-                document.body.innerHTML = '<h2 style="text-align:center; margin-top:50px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
-            }
+            if (result.value === 'rave2026') { document.getElementById('main-content').style.display = 'block'; } 
+            else { document.body.innerHTML = '<h2 style="text-align:center; margin-top:50px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>'; }
         });
 
         const firebaseConfig = {
@@ -199,6 +186,13 @@
         let bookingsData = {};
         const TOTAL_SEATS = 403;
 
+        // دالة مساعدة للترتيب الذكي (عشان A10 تيجي بعد A9 مش بعد A1)
+        function getSortedSeats() {
+            return Object.keys(bookingsData).sort((a, b) => {
+                return a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+            });
+        }
+
         onValue(ref(db, 'bookings'), (snapshot) => {
             bookingsData = snapshot.val() || {};
             renderTable();
@@ -209,8 +203,10 @@
             tbody.innerHTML = '';
             
             let total = 0; let attended = 0; let pending = 0;
+            const sortedSeats = getSortedSeats(); // استخدام الترتيب الذكي هنا
 
-            for (const [seatId, info] of Object.entries(bookingsData)) {
+            sortedSeats.forEach(seatId => {
+                const info = bookingsData[seatId];
                 total++;
                 if (info.status === 'attended') attended++; else pending++;
 
@@ -240,7 +236,7 @@
                     <td>${actionBtn}</td>
                 `;
                 tbody.appendChild(tr);
-            }
+            });
 
             document.getElementById('total-booked').innerText = total;
             document.getElementById('total-attended').innerText = attended;
@@ -305,22 +301,24 @@
 
         window.exportCSV = function() {
             let csvContent = "data:text/csv;charset=utf-8,\uFEFFالمقعد,الاسم,الكود,الحالة,تاريخ الحجز\n";
-            for (const [seatId, info] of Object.entries(bookingsData)) {
+            const sortedSeats = getSortedSeats(); // استخدام الترتيب الذكي هنا
+            
+            sortedSeats.forEach(seatId => {
+                const info = bookingsData[seatId];
                 let statusAr = info.status === 'attended' ? 'حضر' : 'في الانتظار';
                 csvContent += `${seatId},${info.name},${info.code},${statusAr},${info.bookedAt}\n`;
-            }
+            });
+            
             const link = document.createElement("a"); link.href = encodeURI(csvContent);
             link.download = "Bookings_Report.csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        // دالة طباعة كشف الحضور
         window.printGuestList = function() {
             if (Object.keys(bookingsData).length === 0) {
                 return Swal.fire('عفواً', 'لا يوجد حجوزات لطباعتها حتى الآن.', 'info');
             }
 
-            // ترتيب البيانات أبجدياً حسب رقم المقعد (A1, A2... B1...)
-            const sortedSeats = Object.keys(bookingsData).sort();
+            const sortedSeats = getSortedSeats(); // استخدام الترتيب الذكي للطباعة
 
             let printContent = `
                 <html>
@@ -374,17 +372,11 @@
                 </html>
             `;
 
-            // فتح نافذة جديدة للطباعة
             const printWindow = window.open('', '_blank', 'width=800,height=600');
             printWindow.document.write(printContent);
             printWindow.document.close();
             
-            // تأخير بسيط لضمان تحميل المحتوى قبل الطباعة
-            setTimeout(() => {
-                printWindow.print();
-                // اختياري: إغلاق النافذة بعد الطباعة
-                // printWindow.close(); 
-            }, 500);
+            setTimeout(() => { printWindow.print(); }, 500);
         }
     </script>
 </body>
