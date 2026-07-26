@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - مسرح المقر البابوي</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- مكتبة الرسوم البيانية Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="data:application/json;charset=utf-8,%7B%22name%22%3A%22%D9%84%D9%88%D8%AD%D8%A9%20%D8%A7%D9%84%D8%AA%D8%AD%D9%83%D9%85%22%2C%22short_name%22%3A%22%D8%A7%D9%84%D8%A5%D8%AF%D8%A7%D8%B1%D8%A9%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23f4f6f9%22%2C%22theme_color%22%3A%22%232c3e50%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fcdn-icons-png.flaticon.com%2F512%2F2099%2F2099058.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f4f6f9; margin: 0; color: #2c3e50; }
+        
+        #login-screen { height: 100vh; display: flex; justify-content: center; align-items: center; background: linear-gradient(135deg, #2c3e50, #3498db); }
+        .login-box { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); text-align: center; width: 300px; }
+        .login-box h2 { margin-top: 0; color: #2c3e50; }
+        .login-box input { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #ddd; border-radius: 8px; font-family: inherit; font-size: 16px; box-sizing: border-box; text-align: center; }
+        .login-box button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: inherit; }
+
+        #dashboard-screen { display: none; padding: 20px; max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .header h1 { margin: 0; color: #2c3e50; font-size: 24px; }
+        
+        /* قسم الإحصائيات البصرية والرسوم البيانية */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .stat-card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 16px; }
+        .stat-number { font-size: 28px; font-weight: 700; color: #2c3e50; }
+        
+        .chart-container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; justify-content: center; align-items: center; max-height: 300px; }
+        canvas { max-height: 260px !important; }
+
+        .controls-container { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+        .search-input { flex: 1; min-width: 250px; padding: 12px 20px; font-size: 16px; border: 2px solid #e2e8f0; border-radius: 10px; font-family: inherit; transition: all 0.3s; }
+        .search-input:focus { border-color: #3498db; outline: none; }
+        
+        .action-btn { padding: 12px 20px; font-size: 16px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; font-family: inherit; display: flex; align-items: center; gap: 8px; color: white; transition: 0.2s; }
+        .excel-btn { background: #27ae60; }
+        .excel-btn:hover { background: #219653; }
+        .reset-btn { background: #c0392b; }
+        .reset-btn:hover { background: #a93226; }
+        .vip-btn { background: #8e44ad; }
+        .vip-btn:hover { background: #732d91; }
+
+        .table-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: right; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; color: #7f8c8d; font-weight: bold; }
+        tr:hover { background-color: #f1f4f6; }
+        
+        .seat-badge { background: #e74c3c; color: white; padding: 5px 10px; border-radius: 6px; font-weight: bold; display: inline-block; }
+        .code-badge { background: #2c3e50; color: #f1c40f; padding: 5px 10px; border-radius: 6px; font-family: monospace; letter-spacing: 1px; }
+        .scanned-badge { background: #27ae60; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .not-scanned-badge { background: #e67e22; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .delete-btn { background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: bold; }
+        .empty-state { text-align: center; padding: 50px; color: #95a5a6; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2>الإدارة</h2>
+            <p style="color: #7f8c8d; font-size: 14px;">أدخل كلمة المرور للوصول للحجوزات</p>
+            <input type="password" id="admin-pass" placeholder="كلمة المرور">
+            <button onclick="checkPassword()">دخول</button>
+        </div>
+    </div>
+
+    <div id="dashboard-screen">
+        <div class="header">
+            <h1>مسرح المقر البابوي - لوحة القيادة</h1>
+        </div>
+
+        <!-- لوحة الإحصائيات وعداد الحضور -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>إجمالي التذاكر المحجوزة</h3>
+                <div class="stat-number" id="total-bookings" style="color: #2980b9;">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>إجمالي الحاضرين (دخلوا المسرح)</h3>
+                <div class="stat-number" id="attended-count" style="color: #27ae60;">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>المتخلفون (لم يحضروا بعد)</h3>
+                <div class="stat-number" id="absent-count" style="color: #e67e22;">0</div>
+            </div>
+        </div>
+
+        <!-- الرسم البياني الدائري للإشغال -->
+        <div class="chart-container">
+            <canvas id="occupancyChart"></canvas>
+        </div>
+
+        <div class="controls-container">
+            <input type="text" id="search-input" class="search-input" placeholder="🔍 ابحث بالاسم، المقعد، أو الكود..." onkeyup="filterTable()">
+            <button class="action-btn vip-btn" onclick="openVipBooking()">🎟️ حجز ضيف / VIP</button>
+            <button class="action-btn excel-btn" onclick="exportToExcel()">📊 استخراج إكسيل</button>
+            <button class="action-btn reset-btn" onclick="resetSystem()">⚠️ تصفير المسرح</button>
+        </div>
+
+        <div class="table-container">
+            <table id="bookings-table">
+                <thead>
+                    <tr>
+                        <th>رقم المقعد</th>
+                        <th>اسم صاحب التذكرة</th>
+                        <th>كود الحجز</th>
+                        <th>حالة الحضور</th>
+                        <th>وقت الحجز</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="bookings-table-body">
+                    <!-- البيانات هنا -->
+                </tbody>
+            </table>
+            <div id="empty-message" class="empty-state" style="display: none;">لا يوجد حجوزات حتى الآن.</div>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            const swCode = `self.addEventListener('install', (e) => { self.skipWaiting(); }); self.addEventListener('fetch', (e) => { });`;
+            const blob = new Blob([swCode], {type: 'application/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(console.error);
+        }
+    </script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue, remove, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
+            authDomain: "test-49b8c.firebaseapp.com",
+            projectId: "test-49b8c",
+            storageBucket: "test-49b8c.firebasestorage.app",
+            messagingSenderId: "658085082590",
+            appId: "1:658085082590:web:632f798dca5a87e2da994f",
+            measurementId: "G-G0SHP0PBR0",
+            databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        let allBookingsData = []; 
+        let myChart = null;
+
+        window.checkPassword = function() {
+            const pass = document.getElementById('admin-pass').value;
+            if(pass === "rave2026") {
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('dashboard-screen').style.display = 'block';
+                loadBookings(); 
+            } else {
+                Swal.fire({ icon: 'error', title: 'خطأ', text: 'كلمة المرور غير صحيحة!' });
+            }
+        };
+
+        function loadBookings() {
+            const bookingsRef = ref(db, 'bookings');
+            onValue(bookingsRef, (snapshot) => {
+                const data = snapshot.val();
+                const tableBody = document.getElementById('bookings-table-body');
+                const emptyMessage = document.getElementById('empty-message');
+                
+                tableBody.innerHTML = ''; 
+                allBookingsData = [];
+
+                if (!data) {
+                    emptyMessage.style.display = 'block';
+                    document.getElementById('total-bookings').innerText = '0';
+                    document.getElementById('attended-count').innerText = '0';
+                    document.getElementById('absent-count').innerText = '0';
+                    updateChart(0, 0);
+                    return;
+                }
+
+                emptyMessage.style.display = 'none';
+                
+                const seatIds = Object.keys(data);
+                const total = seatIds.length;
+                let attended = 0;
+
+                const bookingsArray = seatIds.map(seatId => {
+                    return { seatId: seatId, ...data[seatId] };
+                }).sort((a, b) => new Date(b.bookedAt) - new Date(a.bookedAt));
+
+                bookingsArray.forEach(booking => {
+                    if (booking.scanned === true) attended++;
+                    
+                    const dateObj = new Date(booking.bookedAt);
+                    const formattedDate = dateObj.toLocaleDateString('ar-EG') + ' - ' + dateObj.toLocaleTimeString('ar-EG');
+                    
+                    allBookingsData.push({
+                        "رقم المقعد": booking.seatId,
+                        "الاسم": booking.name,
+                        "كود الحجز": booking.code,
+                        "الحضور": booking.scanned === true ? "حاضر" : "لم يحضر",
+                        "التاريخ والوقت": formattedDate
+                    });
+
+                    const attendanceBadge = booking.scanned === true 
+                        ? '<span class="scanned-badge">✔ حاضر</span>' 
+                        : '<span class="not-scanned-badge">⏳ لم يحضر</span>';
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><span class="seat-badge">${booking.seatId}</span></td>
+                        <td style="font-weight: bold;">${booking.name}</td>
+                        <td><span class="code-badge">${booking.code}</span></td>
+                        <td>${attendanceBadge}</td>
+                        <td style="direction: ltr; text-align: right;">${formattedDate}</td>
+                        <td><button class="delete-btn" onclick="deleteBooking('${booking.seatId}', '${booking.code}')">إلغاء</button></td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+
+                // تحديث العدادات
+                document.getElementById('total-bookings').innerText = total;
+                document.getElementById('attended-count').innerText = attended;
+                document.getElementById('absent-count').innerText = (total - attended);
+
+                // تحديث الرسم البياني (افتراض مسرح بـ 250 كرسي إجمالي مثلاً أو إجمالي المحجوزات مقارنة بالباقي)
+                updateChart(attended, total - attended);
+            });
+        }
+
+        // إعداد الرسم البياني الدائري
+        function updateChart(attended, absent) {
+            const ctx = document.getElementById('occupancyChart').getContext('2d');
+            if (myChart) myChart.destroy();
+
+            myChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['حاضرون فعلياً', 'متخلفون / في الطريق'],
+                    datasets: [{
+                        data: [attended, absent],
+                        backgroundColor: ['#27ae60', '#e67e22'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { font: { family: 'Cairo', size: 14 } } }
+                    }
+                }
+            });
+        }
+
+        window.filterTable = function() {
+            const input = document.getElementById("search-input").value.toLowerCase();
+            const tr = document.getElementById("bookings-table-body").getElementsByTagName("tr");
+            for (let i = 0; i < tr.length; i++) {
+                const tdSeat = tr[i].getElementsByTagName("td")[0];
+                const tdName = tr[i].getElementsByTagName("td")[1];
+                const tdCode = tr[i].getElementsByTagName("td")[2];
+                if (tdSeat || tdName || tdCode) {
+                    const text = (tdSeat.textContent + tdName.textContent + tdCode.textContent).toLowerCase();
+                    tr[i].style.display = text.indexOf(input) > -1 ? "" : "none";
+                }       
+            }
+        }
+
+        window.deleteBooking = function(seatId, ticketCode) {
+            Swal.fire({
+                title: 'إلغاء الحجز؟', text: `سيتم مسح حجز المقعد ${seatId}.`, icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#e74c3c', confirmButtonText: 'نعم، ألغِ', cancelButtonText: 'تراجع'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    remove(ref(db, 'bookings/' + seatId));
+                    remove(ref(db, 'usedCodes/' + ticketCode));
+                    Swal.fire('تم الإلغاء!', 'تم مسح الحجز.', 'success');
+                }
+            });
+        }
+
+        window.openVipBooking = function() {
+            Swal.fire({
+                title: 'حجز مقعد لضيف (VIP)',
+                html: '<input id="vip-name" class="swal2-input" placeholder="اسم الضيف">' + '<input id="vip-seat" class="swal2-input" placeholder="رقم المقعد (مثال: A5)" style="text-transform: uppercase;">',
+                focusConfirm: false, showCancelButton: true, confirmButtonText: 'تأكيد الحجز', cancelButtonText: 'إلغاء', confirmButtonColor: '#8e44ad',
+                preConfirm: () => {
+                    const name = document.getElementById('vip-name').value.trim();
+                    const seat = document.getElementById('vip-seat').value.trim().toUpperCase();
+                    if (!name || !seat) { Swal.showValidationMessage('أدخل الاسم ورقم المقعد'); return false; }
+                    return { name: name, seat: seat };
+                }
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    const { name, seat } = result.value;
+                    const snap = await get(ref(db, 'bookings/' + seat));
+                    if (snap.exists()) { Swal.fire('خطأ', 'المقعد محجوز بالفعل!', 'error'); return; }
+
+                    const specialCode = 'VIP-' + Math.floor(1000 + Math.random() * 9000);
+                    const updates = {};
+                    updates['/bookings/' + seat] = { name: name + ' (VIP)', code: specialCode, bookedAt: new Date().toISOString(), status: "confirmed", scanned: false };
+                    updates['/usedCodes/' + specialCode] = true;
+
+                    await update(ref(db), updates);
+                    Swal.fire('تم بنجاح', `تم حجز المقعد ${seat}.`, 'success');
+                }
+            });
+        }
+
+        window.exportToExcel = function() {
+            if(allBookingsData.length === 0) { Swal.fire({ icon: 'info', title: 'فارغ', text: 'لا يوجد بيانات لتصديرها.' }); return; }
+            const worksheet = XLSX.utils.json_to_sheet(allBookingsData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "الحجوزات");
+            if(!worksheet['!views']) worksheet['!views'] = [];
+            worksheet['!views'].push({rightToLeft: true});
+            XLSX.writeFile(workbook, "Bookings_Report.xlsx");
+        }
+
+        window.resetSystem = function() {
+            Swal.fire({
+                title: 'تحذير شديد الخطورة! ⚠️', html: 'مسح جميع الحجوزات بالكامل؟', icon: 'error',
+                showCancelButton: true, confirmButtonColor: '#c0392b', confirmButtonText: 'نعم', cancelButtonText: 'إلغاء'
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    Swal.fire({ title: 'أكد بكتابة "مسح"', input: 'text', showCancelButton: true }).then((inp) => {
+                        if (inp.value === "مسح") {
+                            set(ref(db, 'bookings'), null);
+                            set(ref(db, 'usedCodes'), null);
+                            Swal.fire('تم التصفير!', '', 'success');
+                        }
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>
