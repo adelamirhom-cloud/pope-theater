@@ -40,7 +40,14 @@
         .scroll-container::-webkit-scrollbar { display: none; }
         .scroll-container { -ms-overflow-style: none; scrollbar-width: none; }
         
-        .theater-inner { min-width: 1150px; margin: 0 auto; direction: ltr; }
+        /* إضافة padding لمنع قص الكراسي على الأطراف */
+        .theater-inner { 
+            min-width: 1150px; 
+            margin: 0 auto; 
+            direction: ltr; 
+            padding: 0 25px; /* مساحة أمان يمين وشمال */
+            box-sizing: content-box;
+        }
         
         .stage-top { 
             background: linear-gradient(145deg, #8d6e63, #5d4037); color: #ffecb3; font-size: 28px; 
@@ -123,30 +130,34 @@
         .share-btn { flex: 1; padding: 14px; background: #25D366; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
         .close-ticket-btn { flex: 1; padding: 14px; background: #e74c3c; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-        /* تعديلات الموبايل الرايقة */
+        /* تعديلات الموبايل - الفورم أصغر والقص اتعالج */
         @media (max-width: 768px) {
-            body { padding-bottom: 300px; padding-top: 0; margin: 0; }
-            .theater-wrapper { padding: 15px 5px; border-radius: 0; box-shadow: none; }
-            .countdown-bar { flex-wrap: wrap; gap: 10px; padding: 15px 10px; margin-bottom: 15px; }
+            body { padding-bottom: 180px; padding-top: 0; margin: 0; } /* تقليل الفراغ السفلي */
+            .theater-wrapper { padding: 15px 0; border-radius: 0; box-shadow: none; }
+            .countdown-bar { flex-wrap: wrap; gap: 10px; padding: 10px; margin-bottom: 15px; }
             .cd-title { border: none; padding: 0; margin: 0; width: 100%; font-size: 16px; margin-bottom: 5px; text-align: center; }
             .cd-number { font-size: 20px; padding: 5px 10px; }
-            .stage-top { font-size: 20px; padding: 15px; margin-bottom: 25px; border-radius: 8px 8px 40px 40px; }
+            .stage-top { font-size: 20px; padding: 15px; margin-bottom: 25px; border-radius: 8px 8px 40px 40px; margin-left: 15px; margin-right: 15px;} /* تظبيط هامش الخشبة */
+            
             .legend { gap: 12px; padding-top: 15px; margin-top: 20px; font-size: 12px; justify-content: center; }
             .legend-item { font-size: 12px; }
             .legend-box { width: 18px; height: 18px; }
             
-            /* الفورم الزجاجي العائم أسفل الشاشة */
+            /* الفورم الزجاجي العائم: أصبح أنحف وأكثر احترافية */
             .booking-form { 
                 position: fixed; bottom: 0; left: 0; right: 0; margin: 0; 
-                border-radius: 25px 25px 0 0; padding: 20px 15px; z-index: 1000; 
+                border-radius: 20px 20px 0 0; padding: 15px; z-index: 1000; 
                 background: rgba(255, 255, 255, 0.95); 
                 backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-                box-shadow: 0 -10px 25px rgba(0,0,0,0.1); border-top: 1px solid rgba(255,255,255,0.6);
+                box-shadow: 0 -5px 20px rgba(0,0,0,0.1); border-top: 1px solid rgba(255,255,255,0.6);
             }
-            .summary-text { font-size: 16px; padding: 8px 15px; width: 100%; box-sizing: border-box; margin-bottom: 10px;}
-            .booking-form input { width: 100%; box-sizing: border-box; padding: 12px; font-size: 16px; }
-            .input-group { flex-direction: column; gap: 10px; width: 100%; }
-            button.book-btn { width: 100%; justify-content: center; padding: 14px; font-size: 18px; border-radius: 12px; margin-top: 5px;}
+            .summary-text { font-size: 14px; padding: 6px 15px; width: 100%; box-sizing: border-box; margin-bottom: 10px;}
+            
+            /* الحقول أصبحت بجوار بعضها لتوفير المساحة */
+            .input-group { flex-direction: row; flex-wrap: nowrap; gap: 10px; width: 100%; margin-bottom: 10px;}
+            .booking-form input { width: 50%; box-sizing: border-box; padding: 10px; font-size: 14px; }
+            
+            button.book-btn { width: 100%; justify-content: center; padding: 12px; font-size: 16px; border-radius: 12px; margin-top: 0;}
             .sys-footer { display: none; }
         }
     </style>
@@ -181,8 +192,9 @@
         <div class="booking-form">
             <div class="summary-text" id="selected-seats-list">لم يتم تحديد مقعد بعد</div>
             <div class="input-group">
+                <!-- الحقول بقت جنب بعض في الموبايل -->
                 <input type="text" id="user-name" placeholder="الاسم ثلاثي" required autocomplete="off">
-                <input type="text" id="ticket-code" placeholder="كود التيكت المميز" required autocomplete="off">
+                <input type="text" id="ticket-code" placeholder="الكود المميز" required autocomplete="off">
             </div>
             <button class="book-btn" id="confirm-btn">
                 <div class="spinner" id="btn-spinner"></div>
@@ -212,12 +224,11 @@
         </div>
     </div>
 
-    <!-- كود الجافاسكريبت النظيف -->
+    <!-- كود الجافاسكريبت (لم يتم تغييره) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update, get, set, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // توليد معرف فريد للمستخدم لزوم القفل الذكي
         const mySessionId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 
         const firebaseConfig = {
@@ -233,7 +244,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // أكواد التذاكر المسموحة (يمكنك إضافة جميع الـ 403 كود هنا)
         const validTicketCodes = [
             "Q7L2X9", "B5M8K3", "P4V9R1", "W3J6H7", "C8T1F2", "Z9N5D4", "G2X7Y8", "M1K4B6", "R6H3P9", "D8F2V5",
             "X5T7C1", "L9Q4N2", "Y3M1Z8", "K6B5W7", "V2R8J3", "H7P6D9", "F1C4T2", "N4Z9G5", "J8X2M1", "T5V7R6",
@@ -540,10 +550,7 @@
             function resetButton() { confirmBtn.disabled = false; btnText.innerText = "تأكيد الحجز"; btnSpinner.style.display = "none"; }
         });
 
-        // تشغيل الوظائف الأساسية
-        generateSeats(); 
-        listenToBookings(); 
-        listenToLocks();
+        generateSeats(); listenToBookings(); listenToLocks();
     </script>
 </body>
 </html>
