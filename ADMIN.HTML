@@ -29,6 +29,10 @@
         }
         .btn-scanner { background-color: #9b59b6; }
         .btn-scanner:hover { background-color: #8e44ad; }
+        .btn-groups { background-color: #8e44ad; }
+        .btn-groups:hover { background-color: #732d91; }
+        .btn-acc { background-color: #1abc9c; }
+        .btn-acc:hover { background-color: #16a085; }
         .btn-export { background-color: #27ae60; }
         .btn-export:hover { background-color: #2ecc71; }
         .btn-print { background-color: #5d6d7e; }
@@ -172,6 +176,8 @@
                 <button class="btn btn-scanner" onclick="window.location.href='Scanner.html'">📷 ماسح التذاكر</button>
                 
                 <!-- أزرار خاصة بالأدمن فقط -->
+                <a id="btn-groups" href="group-booking.html" target="_blank" class="btn btn-groups" style="display: none;">👥 حجز المجموعات</a>
+                <a id="btn-acc" href="acc.html" target="_blank" class="btn btn-acc" style="display: none;">📊 الخزينة والوردية</a>
                 <button id="btn-map" class="btn btn-map" onclick="openMap()" style="display: none;">🗺️ الخريطة المباشرة</button>
                 <button id="btn-tags" class="btn btn-tags" onclick="printNameTags()" style="display: none;">🎫 طباعة البادجات (VIP)</button>
                 <button id="btn-print" class="btn btn-print" onclick="printGuestList()" style="display: none;">🖨️ طباعة الكشف</button>
@@ -271,6 +277,8 @@
                 document.getElementById('main-content').style.display = 'block';
                 document.getElementById('admin-stats').style.display = 'flex';
                 document.getElementById('admin-controls').style.display = 'flex';
+                document.getElementById('btn-groups').style.display = 'inline-flex';
+                document.getElementById('btn-acc').style.display = 'inline-flex';
                 document.getElementById('btn-export').style.display = 'flex';
                 document.getElementById('btn-print').style.display = 'flex';
                 document.getElementById('btn-tags').style.display = 'flex';
@@ -367,7 +375,6 @@
                     : `<button class="action-btn" onclick="confirmManualAttendance('${seatId}', '${info.name}')">تأكيد حضور</button>`;
                 
                 let cancelBtn = '';
-                // زرار الإلغاء هيظهر للأدمن بس
                 if (currentRole === 'admin') {
                     cancelBtn = `<button class="action-btn-del" onclick="cancelBooking('${seatId}', '${info.name}', '${info.code}')">إلغاء 🗑️</button>`;
                 }
