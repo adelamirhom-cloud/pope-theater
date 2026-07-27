@@ -135,8 +135,10 @@
         .seat { 
             width: 30px; height: 30px; border: 1px solid #bcbcbc; border-radius: 6px; display: flex; 
             justify-content: center; align-items: center; font-size: 11px; font-weight: 700; color: #444; 
-            background: #f0f0f0; transition: 0.2s; position: relative; cursor: help; flex-shrink: 0;
+            background: #f0f0f0; transition: 0.2s; position: relative; cursor: pointer; flex-shrink: 0;
         }
+        .seat:hover { transform: scale(1.1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 10; }
+        
         .row-label { width: 30px; height: 30px; background: #34495e; color: white; font-weight: 700; display: flex; justify-content: center; align-items: center; border-radius: 4px; font-size: 12px; flex-shrink: 0;}
         
         /* Seat Statuses in Map */
@@ -155,6 +157,9 @@
             opacity: 0; visibility: hidden; pointer-events: none; z-index: 100; font-family: 'Cairo', sans-serif;
         }
         .seat:hover::after { opacity: 1; visibility: visible; }
+        
+        .seat-view-img { border-radius: 12px; border: 3px solid #ecf0f1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .swal2-container.swal-on-top { z-index: 999999 !important; }
 
         @media (max-width: 768px) {
             .admin-header, .controls-section { padding: 15px; flex-direction: column; }
@@ -172,10 +177,7 @@
                 <span id="role-badge" class="role-badge">Admin</span>
             </h1>
             <div class="header-buttons">
-                <!-- أزرار متوفرة للأدمن والأمن -->
                 <button class="btn btn-scanner" onclick="window.location.href='Scanner.html'">📷 ماسح التذاكر</button>
-                
-                <!-- أزرار خاصة بالأدمن فقط -->
                 <a id="btn-groups" href="group-booking.html" target="_blank" class="btn btn-groups" style="display: none;">👥 حجز المجموعات</a>
                 <a id="btn-acc" href="acc.html" target="_blank" class="btn btn-acc" style="display: none;">📊 الخزينة والوردية</a>
                 <button id="btn-map" class="btn btn-map" onclick="openMap()" style="display: none;">🗺️ الخريطة المباشرة</button>
@@ -213,6 +215,16 @@
                     <button class="btn-vip" onclick="bookVIP()">تأكيد الحجز</button>
                 </div>
             </div>
+            
+            <!-- 🔴 صندوق التنبيهات الحية الجديد 🔴 -->
+            <div class="control-box" style="border-color: #3498db; background-color: #ebf5fb;">
+                <h3 style="color: #2980b9;">📢 تنبيهات حية للمنظمين</h3>
+                <div class="vip-form">
+                    <input type="text" id="alert-message" placeholder="اكتب رسالتك لتظهر على شاشات الأمن فوراً...">
+                    <button class="btn-vip" style="background-color: #2980b9;" onclick="sendAdminAlert()">إرسال 🚀</button>
+                </div>
+            </div>
+
             <div class="control-box" style="border-color: #fadbd8; background-color: #fdf2e9;">
                 <h3 style="color: #c0392b;">⚠️ منطقة الخطر</h3>
                 <p style="font-size: 13px; color: #7f8c8d; margin-top: 0;">هذا الزر سيقوم بمسح جميع الحجوزات وإعادة تعيين النظام بالكامل.</p>
@@ -234,7 +246,6 @@
                     </tr>
                 </thead>
                 <tbody id="table-body">
-                    <!-- البيانات هنا -->
                 </tbody>
             </table>
         </div>
@@ -244,7 +255,7 @@
     <div id="map-modal" class="map-modal">
         <div class="map-container">
             <div class="map-header">
-                <h2>🗺️ خريطة المسرح التفاعلية (Live)</h2>
+                <h2>🗺️ خريطة المسرح التفاعلية (Live) <span style="font-size: 14px; color: #7f8c8d; font-weight: normal;">- اضغط على أي مقعد لمعاينة الرؤية 👁️</span></h2>
                 <button class="close-map-btn" onclick="closeMap()">إغلاق ✖</button>
             </div>
             <div class="map-scroll-area" id="map-scroll-area">
@@ -266,7 +277,6 @@
 
         let currentRole = 'usher'; 
 
-        // تحديد الهوية بناءً على كلمة المرور الجديدة
         Swal.fire({
             title: 'تسجيل الدخول', input: 'password', inputPlaceholder: 'أدخل كلمة المرور...',
             allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#2c3e50'
@@ -312,6 +322,25 @@
 
         let bookingsData = {};
         const TOTAL_SEATS = 403;
+
+        // --- 🔴 دالة إرسال التنبيهات الحية ---
+        window.sendAdminAlert = async function() {
+            const msg = document.getElementById('alert-message').value.trim();
+            if (!msg) return Swal.fire('خطأ', 'يرجى كتابة التنبيه أولاً', 'warning');
+
+            await update(ref(db), {
+                'adminAlerts/current': {
+                    message: msg,
+                    timestamp: Date.now()
+                }
+            });
+            
+            Swal.fire({
+                toast: true, position: 'top-end', icon: 'success', 
+                title: 'تم إرسال التنبيه لجميع المنظمين!', showConfirmButton: false, timer: 3000
+            });
+            document.getElementById('alert-message').value = '';
+        }
 
         const theaterLayout = [
             { row: 'A', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,-1] },
@@ -403,7 +432,6 @@
             document.getElementById('booking-percentage').innerText = percentage + '%';
         }
 
-        // --- الإلغاء الفردي للحجز ---
         window.cancelBooking = function(seatId, name, code) {
             Swal.fire({
                 title: 'إلغاء الحجز؟',
@@ -515,7 +543,7 @@
                     </style>
                 </head>
                 <body>
-                    <h2>📋 كشف حضور مسرح المقر البابوي (22 سبتمبر 2026)</h2>
+                    <h2>📋 كشف حضور مسرح المقر البابوي</h2>
                     <table>
                         <thead>
                             <tr>
@@ -560,7 +588,6 @@
             setTimeout(() => { printWindow.print(); }, 500);
         }
 
-        // --- طباعة بطاقات الـ VIP ---
         window.printNameTags = function() {
             const vipSeats = getSortedSeats().filter(seatId => bookingsData[seatId].code === 'VIP');
             
@@ -614,7 +641,6 @@
             setTimeout(() => { printWindow.print(); }, 500);
         }
 
-        // --- الخريطة التفاعلية للمسرح ---
         window.openMap = function() {
             document.getElementById('map-modal').style.display = 'flex';
             renderMap();
@@ -665,22 +691,56 @@
             const seatId = `${row}${num}`;
             seat.className = 'seat map-empty';
             seat.innerText = num;
-            seat.setAttribute('data-info', `مقعد ${seatId} - متاح`);
+            seat.setAttribute('data-info', `مقعد ${seatId} - متاح (اضغط للمعاينة)`);
+
+            seat.onclick = () => showSeatView(seatId);
 
             if (bookingsData[seatId]) {
                 const info = bookingsData[seatId];
                 if (info.code === 'VIP') {
                     seat.className = 'seat map-vip';
-                    seat.setAttribute('data-info', `VIP: ${info.name}`);
+                    seat.setAttribute('data-info', `VIP: ${info.name} (اضغط للمعاينة)`);
                 } else if (info.status === 'attended') {
                     seat.className = 'seat map-attended';
-                    seat.setAttribute('data-info', `حضر: ${info.name}`);
+                    seat.setAttribute('data-info', `حضر: ${info.name} (اضغط للمعاينة)`);
                 } else {
                     seat.className = 'seat map-pending';
-                    seat.setAttribute('data-info', `محجوز: ${info.name}`);
+                    seat.setAttribute('data-info', `محجوز: ${info.name} (اضغط للمعاينة)`);
                 }
             }
             return seat;
+        }
+
+        window.showSeatView = function(seatId) {
+            const row = seatId.charAt(0).toUpperCase();
+            let imageUrl = '';
+            let viewType = '';
+
+            if (['A', 'B', 'C', 'D', 'E', 'F'].includes(row)) {
+                imageUrl = 'https://placehold.co/600x350/2c3e50/ffffff?text=Front+View+(A-F)'; 
+                viewType = '👀 رؤية أمامية قريبة (Front View)';
+            } else if (['G', 'H', 'I', 'J', 'K', 'L'].includes(row)) {
+                imageUrl = 'https://placehold.co/600x350/8e44ad/ffffff?text=Middle+View+(G-L)'; 
+                viewType = '👀 رؤية متوسطة (Middle View)';
+            } else {
+                imageUrl = 'https://placehold.co/600x350/e74c3c/ffffff?text=Back+View+(M-R)'; 
+                viewType = '👀 رؤية بانورامية خلفية (Back View)';
+            }
+
+            Swal.fire({
+                target: document.getElementById('map-modal'), 
+                title: `رؤية مقعد ${seatId}`,
+                text: viewType,
+                imageUrl: imageUrl,
+                imageWidth: 600,
+                imageHeight: 350,
+                imageAlt: `رؤية من مقعد ${seatId}`,
+                confirmButtonText: 'إغلاق المعاينة',
+                confirmButtonColor: '#2c3e50',
+                customClass: {
+                    container: 'swal-on-top' 
+                }
+            });
         }
     </script>
 </body>
