@@ -7,7 +7,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- تم حذف مكتبة الـ QR Code من هنا لأنها سبب التهنيج -->
+    <script>
+        // نظام لاكتشاف الأخطاء لو الصفحة هنجت
+        window.onerror = function(message, source, lineno) {
+            document.getElementById('login-cover').innerHTML = `<h3 style="color:red; text-align:center; padding:20px;">⚠️ خطأ في الكود!<br>${message}<br>السطر: ${lineno}</h3>`;
+            return true;
+        };
+    </script>
 
     <style>
         :root { --primary: #2c3e50; --secondary: #8e44ad; --accent: #f1c40f; --success: #27ae60; --danger: #e74c3c; }
@@ -132,7 +138,6 @@
                 </tr>
             </thead>
             <tbody id="manifest-body">
-                <!-- يملأ برمجياً -->
             </tbody>
         </table>
     </div>
@@ -140,19 +145,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-        // فحص الباسورد الجديد
-        Swal.fire({
-            title: 'دخول الإدارة', input: 'password', inputPlaceholder: 'كلمة مرور الإدارة',
-            allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#8e44ad'
-        }).then((result) => {
-            if (result.value === 'avatege2019') {
-                document.getElementById('login-cover').style.display = 'none';
-                initApp();
-            } else {
-                document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
-            }
-        });
 
         let db;
         let bookingsData = {};
@@ -178,6 +170,28 @@
             { row: 'Q', farOdd: [23,21,19,17], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
             { row: 'R', farOdd: [23,21,19,17], mainOdd: [0,0,0,9,7,5,3,1],    mainEven: [2,4,6,8,10,0,0],   farEven: [16,18,20,22] }
         ];
+
+        // التأكد إن الصفحة حملت بالكامل قبل ما نطلع رسالة الباسورد
+        window.onload = function() {
+            setTimeout(() => {
+                Swal.fire({
+                    title: 'دخول الإدارة', 
+                    input: 'password', 
+                    inputPlaceholder: 'كلمة مرور الإدارة',
+                    allowOutsideClick: false, 
+                    allowEscapeKey: false, 
+                    confirmButtonText: 'دخول', 
+                    confirmButtonColor: '#8e44ad'
+                }).then((result) => {
+                    if (result.value === 'avatege2019') {
+                        document.getElementById('login-cover').style.display = 'none';
+                        initApp();
+                    } else {
+                        document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
+                    }
+                });
+            }, 500); // تأخير بسيط جداً للتأكد من جاهزية الشاشة
+        };
 
         function initApp() {
             const firebaseConfig = {
