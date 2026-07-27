@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استرجاع التذاكر المفقودة | مسرح المقر البابوي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #e74c3c; --success: #27ae60; --bg: #f5f7fa; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--bg); margin: 0; color: #333; }
+        
+        #main-app { display: none; min-height: 100vh; flex-direction: column; align-items: center; padding: 40px 20px; }
+
+        .header-title { text-align: center; margin-bottom: 30px; color: var(--primary); }
+        .header-title h1 { margin: 0; font-size: 28px; font-weight: 800; }
+        .header-title p { margin: 5px 0 0 0; color: #7f8c8d; font-size: 14px; }
+
+        .search-box {
+            background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%; max-width: 600px; display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 40px;
+        }
+        .search-box input {
+            flex: 1; min-width: 200px; padding: 15px; border: 2px solid #ecf0f1; border-radius: 10px;
+            font-size: 16px; font-family: inherit; outline: none; transition: 0.3s; text-transform: uppercase; font-weight: bold;
+        }
+        .search-box input:focus { border-color: var(--primary); }
+        
+        .btn-search {
+            background: var(--primary); color: white; border: none; padding: 15px 30px;
+            border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; font-family: inherit;
+        }
+        .btn-search:hover { background: #1a252f; transform: translateY(-2px); }
+
+        .results-container {
+            width: 100%; max-width: 800px; display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;
+        }
+
+        /* تصميم التذكرة المسترجعة */
+        .ticket-card {
+            background: #fff; width: 320px; border: 2px dashed #bdc3c7; border-radius: 15px;
+            padding: 20px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.05); position: relative;
+        }
+        .ticket-card::before, .ticket-card::after {
+            content: ''; position: absolute; top: 50%; width: 20px; height: 20px;
+            background-color: var(--bg); border-radius: 50%; transform: translateY(-50%);
+        }
+        .ticket-card::before { left: -12px; border-right: 2px dashed #bdc3c7; }
+        .ticket-card::after { right: -12px; border-left: 2px dashed #bdc3c7; }
+
+        .ticket-header { font-size: 18px; font-weight: 800; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 10px;}
+        .ticket-seat { font-size: 40px; font-weight: 900; color: var(--accent); margin: 10px 0; line-height: 1; }
+        .ticket-name { font-size: 18px; font-weight: bold; color: #34495e; margin-bottom: 15px; }
+        .qr-code-wrapper { display: flex; justify-content: center; margin: 15px 0; padding: 10px; background: #f9f9f9; border-radius: 10px; }
+        .ticket-code { font-family: monospace; font-size: 16px; font-weight: bold; color: #7f8c8d; letter-spacing: 2px; }
+        .ticket-footer { font-size: 12px; color: #95a5a6; margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; }
+
+        .btn-print {
+            background: var(--success); color: white; border: none; padding: 10px 20px; margin-top: 15px;
+            border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; font-family: inherit;
+        }
+        .btn-print:hover { background: #2196F3; }
+
+        .no-results { color: var(--accent); font-size: 18px; font-weight: bold; text-align: center; width: 100%; }
+
+        /* إعدادات الطباعة */
+        @media print {
+            body * { visibility: hidden; }
+            .ticket-card, .ticket-card * { visibility: visible; }
+            .ticket-card {
+                position: absolute; left: 50%; top: 20px; transform: translateX(-50%);
+                width: 8cm !important; border: 2px dashed #000; box-shadow: none;
+                page-break-inside: avoid;
+            }
+            .btn-print { display: none !important; }
+            .ticket-card::before, .ticket-card::after { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-app">
+        <div class="header-title">
+            <h1>🔍 استرجاع التذاكر المفقودة</h1>
+            <p>Rave Technology Solutions - مركز خدمة العملاء</p>
+        </div>
+
+        <div class="search-box no-print">
+            <input type="text" id="search-input" placeholder="أدخل الكود السري للتذكرة (مثال: POS-1234)..." onkeypress="handleEnter(event)">
+            <button class="btn-search" onclick="searchTicket()">بحث بالكود</button>
+        </div>
+
+        <div class="results-container" id="results-container">
+            <!-- التذاكر هتظهر هنا -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // حماية الصفحة بباسورد الإدارة الموحد
+        Swal.fire({
+            title: 'دخول خدمة العملاء', 
+            input: 'password', 
+            inputPlaceholder: 'أدخل كلمة المرور...',
+            allowOutsideClick: false, 
+            allowEscapeKey: false, 
+            confirmButtonText: 'دخول', 
+            confirmButtonColor: '#2c3e50'
+        }).then((result) => {
+            if (result.value === 'avatege2019') {
+                document.getElementById('main-app').style.display = 'flex';
+                initApp();
+            } else {
+                document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
+            }
+        });
+
+        let db;
+
+        function initApp() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
+                authDomain: "test-49b8c.firebaseapp.com",
+                projectId: "test-49b8c",
+                storageBucket: "test-49b8c.firebasestorage.app",
+                messagingSenderId: "658085082590",
+                appId: "1:658085082590:web:632f798dca5a87e2da994f",
+                measurementId: "G-G0SHP0PBR0",
+                databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
+            };
+            const app = initializeApp(firebaseConfig);
+            db = getDatabase(app);
+        }
+
+        window.handleEnter = function(event) {
+            if (event.key === 'Enter') {
+                searchTicket();
+            }
+        }
+
+        window.searchTicket = async function() {
+            // تحويل الكود المكتوب لحروف كبيرة لضمان التطابق
+            const query = document.getElementById('search-input').value.trim().toUpperCase();
+            const container = document.getElementById('results-container');
+            
+            if (!query) {
+                return Swal.fire('تنبيه', 'يرجى كتابة كود التذكرة للبحث!', 'warning');
+            }
+
+            container.innerHTML = '<div style="color:#3498db; font-weight:bold;">جاري البحث عن الكود في قاعدة البيانات... ⏳</div>';
+
+            try {
+                const snapshot = await get(ref(db, 'bookings'));
+                const allBookings = snapshot.val() || {};
+                let foundTickets = [];
+
+                // البحث عن تطابق في الكود (Code) فقط
+                for (const seatId in allBookings) {
+                    const info = allBookings[seatId];
+                    if (info.code && info.code.toUpperCase() === query) {
+                        foundTickets.push({ seat: seatId, ...info });
+                    }
+                }
+
+                container.innerHTML = ''; 
+
+                if (foundTickets.length === 0) {
+                    container.innerHTML = '<div class="no-results">❌ لم يتم العثور على أي حجز بهذا الكود. يرجى التأكد من كتابة الكود بشكل صحيح.</div>';
+                    return;
+                }
+
+                foundTickets.forEach((ticket, index) => {
+                    const ticketHTML = `
+                        <div class="ticket-card" id="ticket-${index}">
+                            <div class="ticket-header">مسرح المقر البابوي 🎭</div>
+                            <div style="color: #7f8c8d; font-size: 14px;">رقم المقعد</div>
+                            <div class="ticket-seat">${ticket.seat}</div>
+                            <div class="ticket-name">${ticket.name}</div>
+                            <div class="qr-code-wrapper" id="qr-${index}"></div>
+                            <div class="ticket-code">${ticket.code}</div>
+                            <button class="btn-print no-print" onclick="printSingleTicket('ticket-${index}')">🖨️ طباعة هذه التذكرة</button>
+                            <div class="ticket-footer">بدل فاقد المستخرج - Rave Technology</div>
+                        </div>
+                    `;
+                    container.innerHTML += ticketHTML;
+                });
+
+                // توليد الـ QR Codes
+                setTimeout(() => {
+                    foundTickets.forEach((ticket, index) => {
+                        new QRCode(document.getElementById(`qr-${index}`), {
+                            text: ticket.code,
+                            width: 120,
+                            height: 120,
+                            colorDark: "#000000",
+                            colorLight: "#ffffff"
+                        });
+                    });
+                }, 100);
+
+            } catch (error) {
+                Swal.fire('خطأ', 'حدثت مشكلة أثناء الاتصال بقاعدة البيانات.', 'error');
+                container.innerHTML = '';
+            }
+        }
+
+        window.printSingleTicket = function(ticketId) {
+            const allCards = document.querySelectorAll('.ticket-card');
+            allCards.forEach(card => card.style.display = 'none');
+            document.getElementById(ticketId).style.display = 'block';
+            
+            window.print();
+            
+            setTimeout(() => {
+                allCards.forEach(card => card.style.display = 'block');
+            }, 500);
+        }
+    </script>
+</body>
+</html>
