@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تقفيل الوردية المحاسبية | مسرح المقر البابوي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; background-color: #f5f7fa; margin: 0; color: #2c3e50; }
+        
+        /* Header */
+        .ledger-header {
+            background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 20px 30px;
+            display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .ledger-title { margin: 0; font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .acc-badge { font-size: 12px; background: #2c3e50; color: white; padding: 4px 10px; border-radius: 12px; }
+
+        /* Setup Section */
+        .setup-section {
+            background: white; margin: 20px 30px; padding: 20px; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); display: flex; gap: 15px; align-items: center; flex-wrap: wrap;
+        }
+        .setup-section input {
+            padding: 10px 15px; border: 2px solid #bdc3c7; border-radius: 8px; font-family: inherit; font-size: 16px; font-weight: bold; width: 150px; text-align: center;
+        }
+        .setup-section label { font-weight: 700; font-size: 16px; color: #34495e; }
+
+        /* Stats Cards */
+        .stats-container { display: flex; gap: 20px; padding: 0 30px; flex-wrap: wrap; }
+        .stat-card {
+            background: white; padding: 20px; border-radius: 10px; flex: 1; min-width: 200px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center; border-bottom: 4px solid #3498db;
+        }
+        .stat-card h3 { margin: 0 0 10px 0; color: #7f8c8d; font-size: 16px; }
+        .stat-card .num { font-size: 36px; font-weight: 700; color: #2c3e50; margin: 0; }
+        .stat-money { border-color: #f1c40f; }
+        .stat-money .num { color: #f39c12; }
+
+        /* Table */
+        .table-container {
+            background: white; margin: 20px 30px; border-radius: 10px; padding: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; text-align: center; }
+        th, td { padding: 12px; border-bottom: 1px solid #ecf0f1; font-size: 14px; }
+        th { background-color: #f8f9fa; color: #34495e; font-weight: 700; }
+        tr:hover { background-color: #fdfefe; }
+
+        .btn-print {
+            background-color: #2c3e50; color: white; border: none; padding: 10px 25px;
+            border-radius: 8px; font-size: 16px; font-weight: bold; font-family: inherit; cursor: pointer; transition: 0.3s;
+        }
+        .btn-print:hover { background-color: #1a252f; }
+
+        /* Print Styles */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; }
+            .no-print { display: none !important; }
+            .setup-section { display: none; }
+            .stat-card { border: 1px solid #000; box-shadow: none; margin-bottom: 20px; }
+            table { border: 1px solid #000; }
+            th, td { border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="login-cover" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:9999; display:flex; justify-content:center; align-items:center;">
+        <h2 style="color:#2c3e50;">جاري التحقق...</h2>
+    </div>
+
+    <div id="print-area">
+        <div class="ledger-header">
+            <h1 class="ledger-title">
+                📊 الخزينة وتقفيل الوردية 
+                <span class="acc-badge">النظام المالي</span>
+            </h1>
+            <div>
+                <button class="btn-print no-print" onclick="window.print()">🖨️ طباعة تقرير الوردية</button>
+            </div>
+        </div>
+
+        <div class="setup-section no-print">
+            <label for="ticket-price">سعر التذكرة الموحد (ج.م):</label>
+            <input type="number" id="ticket-price" value="100" min="0" oninput="calculateFinancials()">
+            <span style="color: #7f8c8d; font-size: 14px;">(يستخدم لحساب إجمالي الدرج)</span>
+        </div>
+
+        <div class="stats-container">
+            <div class="stat-card">
+                <h3>إجمالي التذاكر المباعة (POS Cash)</h3>
+                <p class="num" id="pos-count">0</p>
+            </div>
+            <div class="stat-card stat-money">
+                <h3>إجمالي النقدية المطلوبة بالدرج</h3>
+                <p class="num" id="total-revenue">0 ج.م</p>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">سجل المبيعات النقدية المباشرة (شباك التذاكر)</h3>
+            <table id="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>المقعد</th>
+                        <th>اسم العميل</th>
+                        <th>كود الفاتورة</th>
+                        <th>وقت الحجز</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    <!-- Data will be populated here -->
+                </tbody>
+            </table>
+            
+            <div style="text-align: center; margin-top: 30px; font-weight: bold; color: #7f8c8d; font-size: 12px;">
+                تم استخراج هذا التقرير الآلي بواسطة نظام Rave Technology Solutions
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // Password Protection
+        Swal.fire({
+            title: 'دخول المحاسب / الإدارة المالية', input: 'password', inputPlaceholder: 'كلمة المرور...',
+            allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#1abc9c'
+        }).then((result) => {
+            if (result.value === 'acc2019') {
+                document.getElementById('login-cover').style.display = 'none';
+                initApp();
+            } else {
+                document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في الصلاحيات. يرجى تحديث الصفحة.</h2>';
+            }
+        });
+
+        let posBookings = [];
+
+        function initApp() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
+                authDomain: "test-49b8c.firebaseapp.com",
+                projectId: "test-49b8c",
+                storageBucket: "test-49b8c.firebasestorage.app",
+                messagingSenderId: "658085082590",
+                appId: "1:658085082590:web:632f798dca5a87e2da994f",
+                measurementId: "G-G0SHP0PBR0",
+                databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
+            };
+            const app = initializeApp(firebaseConfig);
+            const db = getDatabase(app);
+
+            onValue(ref(db, 'bookings'), (snapshot) => {
+                const allBookings = snapshot.val() || {};
+                posBookings = []; // Reset
+
+                // Filter only POS bookings (where code starts with POS-)
+                for (const seatId in allBookings) {
+                    const info = allBookings[seatId];
+                    if (info.code && info.code.startsWith('POS-')) {
+                        posBookings.push({ seat: seatId, ...info });
+                    }
+                }
+                
+                renderTable();
+                calculateFinancials();
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            // Sort by booking time (newest first)
+            posBookings.sort((a, b) => new Date(b.bookedAt) - new Date(a.bookedAt));
+
+            if (posBookings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="color:#7f8c8d; padding:20px;">لا توجد مبيعات نقدية مسجلة حتى الآن.</td></tr>';
+                return;
+            }
+
+            posBookings.forEach((booking, index) => {
+                const dateObj = new Date(booking.bookedAt);
+                const formattedTime = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td style="font-weight:bold; color:#2980b9;">${booking.seat}</td>
+                        <td>${booking.name}</td>
+                        <td style="font-family:monospace; background:#f4f6f7; padding:2px 5px; border-radius:4px;">${booking.code}</td>
+                        <td dir="ltr">${formattedTime}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        window.calculateFinancials = function() {
+            const priceInput = document.getElementById('ticket-price').value;
+            const ticketPrice = parseFloat(priceInput) || 0;
+            const totalTickets = posBookings.length;
+            const totalMoney = totalTickets * ticketPrice;
+
+            document.getElementById('pos-count').innerText = totalTickets;
+            // Format number with commas
+            document.getElementById('total-revenue').innerText = totalMoney.toLocaleString('ar-EG') + ' ج.م';
+        }
+    </script>
+</body>
+</html>
