@@ -528,7 +528,7 @@
 
                 const seatId = selectedSeats[0];
                 const updates = {};
-                updates['/bookings/' + seatId] = { name: userName, code: ticketCode, bookedAt: new Date().toISOString(), status: "confirmed", source: 'online'  // 🔴 الإضافة هنا };
+                updates['/bookings/' + seatId] = { name: userName, code: ticketCode, bookedAt: new Date().toISOString(), status: "confirmed", };
                 updates['/usedCodes/' + ticketCode] = true;
                 updates['/lockedSeats/' + seatId] = null; 
 
