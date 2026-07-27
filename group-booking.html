@@ -6,19 +6,14 @@
     <title>حجز المجموعات (البلوكات) | مسرح المقر البابوي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
-    <script>
-        // نظام لاكتشاف الأخطاء لو الصفحة هنجت
-        window.onerror = function(message, source, lineno) {
-            document.getElementById('login-cover').innerHTML = `<h3 style="color:red; text-align:center; padding:20px;">⚠️ خطأ في الكود!<br>${message}<br>السطر: ${lineno}</h3>`;
-            return true;
-        };
-    </script>
 
     <style>
         :root { --primary: #2c3e50; --secondary: #8e44ad; --accent: #f1c40f; --success: #27ae60; --danger: #e74c3c; }
         body { font-family: 'Cairo', sans-serif; background-color: #ecf0f1; margin: 0; color: #333; height: 100vh; overflow: hidden; }
         
+        /* إخفاء التطبيق بالكامل حتى إدخال كلمة المرور */
+        #main-app { display: none; }
+
         .header { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
         .title { margin: 0; font-size: 20px; display: flex; align-items: center; gap: 10px; }
         .badge { background: var(--secondary); color: white; font-size: 12px; padding: 4px 10px; border-radius: 20px; }
@@ -77,47 +72,46 @@
 </head>
 <body>
 
-    <div id="login-cover" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <h2 style="color:#2c3e50;">جاري التحقق...</h2>
-    </div>
+    <!-- تم إزالة شاشة جاري التحقق لتجنب تغطية مربع الباسورد -->
 
-    <div class="header">
-        <h1 class="title">👥 حجز المجموعات والبلوكات <span class="badge">Group Booking</span></h1>
-        <div style="font-size: 14px; font-weight: bold; color: #ecf0f1;">Rave Technology Solutions</div>
-    </div>
-
-    <div class="layout">
-        <!-- خريطة المسرح -->
-        <div class="map-section">
-            <div class="stage-top">خشبة المسرح</div>
-            <div id="map-seating-area" class="seating-area"></div>
-            <div style="text-align:center; color:#7f8c8d; font-size:12px; margin-top:20px;">
-                💡 تلميح: اضغط على حرف الصف لتحديد أو إلغاء تحديد كافة المقاعد المتاحة في الصف دفعة واحدة.
-            </div>
+    <!-- جسم التطبيق بالكامل (مخفي في البداية) -->
+    <div id="main-app">
+        <div class="header">
+            <h1 class="title">👥 حجز المجموعات والبلوكات <span class="badge">Group Booking</span></h1>
+            <div style="font-size: 14px; font-weight: bold; color: #ecf0f1;">Rave Technology Solutions</div>
         </div>
 
-        <!-- بيانات المجموعة -->
-        <div class="control-section">
-            <div class="info-box">
-                <label>اسم المجموعة / الجهة (مطلوب)</label>
-                <input type="text" id="group-name" placeholder="مثال: فريق الكشافة، كنيسة مارجرجس...">
-                
-                <label>رقم هاتف المسئول (اختياري)</label>
-                <input type="text" id="group-phone" placeholder="01xxxxxxxxx">
+        <div class="layout">
+            <div class="map-section">
+                <div class="stage-top">خشبة المسرح</div>
+                <div id="map-seating-area" class="seating-area"></div>
+                <div style="text-align:center; color:#7f8c8d; font-size:12px; margin-top:20px;">
+                    💡 تلميح: اضغط على حرف الصف لتحديد أو إلغاء تحديد كافة المقاعد المتاحة في الصف دفعة واحدة.
+                </div>
             </div>
 
-            <div class="summary">
-                <h3>إجمالي المقاعد المحددة للمجموعة</h3>
-                <div class="count" id="total-count">0</div>
-                <div id="seats-preview" style="font-size: 12px; color: #ecf0f1; max-height: 60px; overflow-y: auto;"></div>
-            </div>
+            <div class="control-section">
+                <div class="info-box">
+                    <label>اسم المجموعة / الجهة (مطلوب)</label>
+                    <input type="text" id="group-name" placeholder="مثال: فريق الكشافة، كنيسة مارجرجس...">
+                    
+                    <label>رقم هاتف المسئول (اختياري)</label>
+                    <input type="text" id="group-phone" placeholder="01xxxxxxxxx">
+                </div>
 
-            <button class="btn-action" id="btn-reserve" onclick="reserveGroup()" disabled>
-                ✅ حجز وإصدار كشف المجموعة
-            </button>
-            <button class="btn-action btn-clear" onclick="clearSelection()">
-                ✖️ إفراغ التحديد
-            </button>
+                <div class="summary">
+                    <h3>إجمالي المقاعد المحددة للمجموعة</h3>
+                    <div class="count" id="total-count">0</div>
+                    <div id="seats-preview" style="font-size: 12px; color: #ecf0f1; max-height: 60px; overflow-y: auto;"></div>
+                </div>
+
+                <button class="btn-action" id="btn-reserve" onclick="reserveGroup()" disabled>
+                    ✅ حجز وإصدار كشف المجموعة
+                </button>
+                <button class="btn-action btn-clear" onclick="clearSelection()">
+                    ✖️ إفراغ التحديد
+                </button>
+            </div>
         </div>
     </div>
 
@@ -146,6 +140,25 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+        // إظهار نافذة الباسورد فوراً بدون أي شاشات تحميل تغطي عليها
+        Swal.fire({
+            title: 'دخول الإدارة', 
+            input: 'password', 
+            inputPlaceholder: 'كلمة مرور الإدارة',
+            allowOutsideClick: false, 
+            allowEscapeKey: false, 
+            confirmButtonText: 'دخول', 
+            confirmButtonColor: '#8e44ad'
+        }).then((result) => {
+            if (result.value === 'avatege2019') {
+                // إظهار الموقع بعد نجاح الباسورد
+                document.getElementById('main-app').style.display = 'block';
+                initApp();
+            } else {
+                document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
+            }
+        });
+
         let db;
         let bookingsData = {};
         let selectedSeats = new Set();
@@ -170,28 +183,6 @@
             { row: 'Q', farOdd: [23,21,19,17], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
             { row: 'R', farOdd: [23,21,19,17], mainOdd: [0,0,0,9,7,5,3,1],    mainEven: [2,4,6,8,10,0,0],   farEven: [16,18,20,22] }
         ];
-
-        // التأكد إن الصفحة حملت بالكامل قبل ما نطلع رسالة الباسورد
-        window.onload = function() {
-            setTimeout(() => {
-                Swal.fire({
-                    title: 'دخول الإدارة', 
-                    input: 'password', 
-                    inputPlaceholder: 'كلمة مرور الإدارة',
-                    allowOutsideClick: false, 
-                    allowEscapeKey: false, 
-                    confirmButtonText: 'دخول', 
-                    confirmButtonColor: '#8e44ad'
-                }).then((result) => {
-                    if (result.value === 'avatege2019') {
-                        document.getElementById('login-cover').style.display = 'none';
-                        initApp();
-                    } else {
-                        document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
-                    }
-                });
-            }, 500); // تأخير بسيط جداً للتأكد من جاهزية الشاشة
-        };
 
         function initApp() {
             const firebaseConfig = {
