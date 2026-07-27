@@ -9,6 +9,9 @@
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #f5f7fa; margin: 0; color: #2c3e50; }
         
+        /* إخفاء التطبيق بالكامل حتى يتم إدخال الباسورد الصحيح */
+        #main-ledger-app { display: none; }
+
         /* Header */
         .ledger-header {
             background: linear-gradient(135deg, #1abc9c, #16a085); color: white; padding: 20px 30px;
@@ -69,57 +72,57 @@
 </head>
 <body>
 
-    <div id="login-cover" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#fff; z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <h2 style="color:#2c3e50;">جاري التحقق...</h2>
-    </div>
+    <!-- تم إزالة شاشة جاري التحقق نهائياً لمنع تعليق الشاشة -->
 
-    <div id="print-area">
-        <div class="ledger-header">
-            <h1 class="ledger-title">
-                📊 الخزينة وتقفيل الوردية 
-                <span class="acc-badge">النظام المالي</span>
-            </h1>
-            <div>
-                <button class="btn-print no-print" onclick="window.print()">🖨️ طباعة تقرير الوردية</button>
+    <div id="main-ledger-app">
+        <div id="print-area">
+            <div class="ledger-header">
+                <h1 class="ledger-title">
+                    📊 الخزينة وتقفيل الوردية 
+                    <span class="acc-badge">النظام المالي</span>
+                </h1>
+                <div>
+                    <button class="btn-print no-print" onclick="window.print()">🖨️ طباعة تقرير الوردية</button>
+                </div>
             </div>
-        </div>
 
-        <div class="setup-section no-print">
-            <label for="ticket-price">سعر التذكرة الموحد (ج.م):</label>
-            <input type="number" id="ticket-price" value="100" min="0" oninput="calculateFinancials()">
-            <span style="color: #7f8c8d; font-size: 14px;">(يستخدم لحساب إجمالي الدرج)</span>
-        </div>
-
-        <div class="stats-container">
-            <div class="stat-card">
-                <h3>إجمالي التذاكر المباعة (POS Cash)</h3>
-                <p class="num" id="pos-count">0</p>
+            <div class="setup-section no-print">
+                <label for="ticket-price">سعر التذكرة الموحد (ج.م):</label>
+                <input type="number" id="ticket-price" value="100" min="0" oninput="calculateFinancials()">
+                <span style="color: #7f8c8d; font-size: 14px;">(يستخدم لحساب إجمالي الدرج)</span>
             </div>
-            <div class="stat-card stat-money">
-                <h3>إجمالي النقدية المطلوبة بالدرج</h3>
-                <p class="num" id="total-revenue">0 ج.م</p>
-            </div>
-        </div>
 
-        <div class="table-container">
-            <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">سجل المبيعات النقدية المباشرة (شباك التذاكر)</h3>
-            <table id="data-table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>المقعد</th>
-                        <th>اسم العميل</th>
-                        <th>كود الفاتورة</th>
-                        <th>وقت الحجز</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body">
-                    <!-- Data will be populated here -->
-                </tbody>
-            </table>
-            
-            <div style="text-align: center; margin-top: 30px; font-weight: bold; color: #7f8c8d; font-size: 12px;">
-                تم استخراج هذا التقرير الآلي بواسطة نظام Rave Technology Solutions
+            <div class="stats-container">
+                <div class="stat-card">
+                    <h3>إجمالي التذاكر المباعة (POS Cash)</h3>
+                    <p class="num" id="pos-count">0</p>
+                </div>
+                <div class="stat-card stat-money">
+                    <h3>إجمالي النقدية المطلوبة بالدرج</h3>
+                    <p class="num" id="total-revenue">0 ج.م</p>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h3 style="margin-top: 0; color: #2c3e50; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px;">سجل المبيعات النقدية المباشرة (شباك التذاكر)</h3>
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المقعد</th>
+                            <th>اسم العميل</th>
+                            <th>كود الفاتورة</th>
+                            <th>وقت الحجز</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Data will be populated here -->
+                    </tbody>
+                </table>
+                
+                <div style="text-align: center; margin-top: 30px; font-weight: bold; color: #7f8c8d; font-size: 12px;">
+                    تم استخراج هذا التقرير الآلي بواسطة نظام Rave Technology Solutions
+                </div>
             </div>
         </div>
     </div>
@@ -128,13 +131,18 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // Password Protection
+        // إظهار نافذة الباسورد فوراً بالباسورد الموحد `avatege2019`
         Swal.fire({
-            title: 'دخول المحاسب / الإدارة المالية', input: 'password', inputPlaceholder: 'كلمة المرور...',
-            allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#1abc9c'
+            title: 'دخول المحاسب / الإدارة المالية', 
+            input: 'password', 
+            inputPlaceholder: 'كلمة المرور...',
+            allowOutsideClick: false, 
+            allowEscapeKey: false, 
+            confirmButtonText: 'دخول', 
+            confirmButtonColor: '#1abc9c'
         }).then((result) => {
-            if (result.value === 'acc2019') {
-                document.getElementById('login-cover').style.display = 'none';
+            if (result.value === 'avatege2019') {
+                document.getElementById('main-ledger-app').style.display = 'block';
                 initApp();
             } else {
                 document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في الصلاحيات. يرجى تحديث الصفحة.</h2>';
@@ -159,9 +167,8 @@
 
             onValue(ref(db, 'bookings'), (snapshot) => {
                 const allBookings = snapshot.val() || {};
-                posBookings = []; // Reset
+                posBookings = []; 
 
-                // Filter only POS bookings (where code starts with POS-)
                 for (const seatId in allBookings) {
                     const info = allBookings[seatId];
                     if (info.code && info.code.startsWith('POS-')) {
@@ -178,7 +185,6 @@
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = '';
             
-            // Sort by booking time (newest first)
             posBookings.sort((a, b) => new Date(b.bookedAt) - new Date(a.bookedAt));
 
             if (posBookings.length === 0) {
@@ -209,7 +215,6 @@
             const totalMoney = totalTickets * ticketPrice;
 
             document.getElementById('pos-count').innerText = totalTickets;
-            // Format number with commas
             document.getElementById('total-revenue').innerText = totalMoney.toLocaleString('ar-EG') + ' ج.م';
         }
     </script>
