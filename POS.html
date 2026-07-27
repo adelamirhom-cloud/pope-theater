@@ -288,6 +288,7 @@
                                 code: randomCode,
                                 bookedAt: new Date().toISOString(),
                                 status: 'confirmed'
+                                source: 'pos'  // 🔴 الإضافة هنا
                             };
                             updates[`/usedCodes/${randomCode}`] = true;
 
