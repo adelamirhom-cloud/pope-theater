@@ -6,13 +6,13 @@
     <title>حجز المجموعات (البلوكات) | مسرح المقر البابوي</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- مكتبة الـ QR Code -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <style>
         :root { --primary: #2c3e50; --secondary: #8e44ad; --accent: #f1c40f; --success: #27ae60; --danger: #e74c3c; }
-        body { font-family: 'Cairo', sans-serif; background-color: #ecf0f1; margin: 0; color: #333; height: 100vh; overflow: hidden; }
         
+        /* خصائص الشاشة العادية */
+        body { font-family: 'Cairo', sans-serif; background-color: #ecf0f1; margin: 0; color: #333; height: 100vh; overflow: hidden; }
         #main-app { display: none; }
 
         .header { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -55,42 +55,71 @@
         
         .btn-clear { background: #e74c3c; } .btn-clear:hover { background: #c0392b; }
 
-        /* إعدادات الطباعة المعدلة والمصلحة */
+        /* إخفاء عناصر الطباعة في الشاشة العادية */
         #print-manifest, #print-tickets { display: none; }
+
+        /* =========================================
+           خصائص الطباعة المعالجة بشكل جذري (Bulletproof Print CSS)
+           ========================================= */
         @media print {
-            body { background: #fff; overflow: visible; height: auto; }
-            #main-app { display: none !important; } /* إخفاء الموقع بالكامل في الطباعة */
-            
+            /* 1. إجبار المتصفح على عرض المحتوى بالطول وإلغاء الـ 100vh */
+            html, body {
+                height: auto !important;
+                overflow: visible !important;
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 2. إخفاء الموقع بالكامل */
+            #main-app { display: none !important; }
+
+            /* 3. إظهار أقسام الطباعة بدون Position Absolute */
             #print-manifest, #print-tickets { 
                 display: block !important; 
+                position: static !important;
+                visibility: visible !important;
+                width: 100% !important;
                 direction: rtl; 
-                padding: 10px; 
             }
             
-            /* الكشف */
+            /* -- إعدادات الكشف -- */
+            #print-manifest { 
+                padding: 20px !important;
+                /* إجبار فصل الصفحة (رمي ورقة جديدة) بعد الكشف مباشرة */
+                page-break-after: always !important; 
+                break-after: page !important;
+            }
             .manifest-header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
             .manifest-table { width: 100%; border-collapse: collapse; text-align: center; }
             .manifest-table th, .manifest-table td { border: 1px solid #000; padding: 12px 8px; font-size: 14px; }
             .manifest-table th { background: #eee !important; -webkit-print-color-adjust: exact; color-adjust: exact; }
 
-            /* التذاكر الفردية المطبوعة */
+            /* -- إعدادات التذاكر -- */
             #print-tickets { 
-                display: flex !important; 
-                flex-wrap: wrap; 
-                gap: 15px; 
-                page-break-before: always; /* الأمر الإجباري لبدء صفحة جديدة للتذاكر */
-                justify-content: space-between;
+                padding: 20px !important;
+                text-align: center; /* لتوسيط التذاكر */
+                /* تأكيد إضافي لفصل الصفحة قبل التذاكر */
+                page-break-before: always !important; 
+                break-before: page !important;
             }
+            
             .ticket-card {
-                width: 48%; 
+                /* استخدام inline-block بدلاً من flex لمنع التهنيج في الطباعة */
+                display: inline-block !important; 
+                width: 46% !important; 
+                margin: 10px 1% !important;
                 border: 2px dashed #333; 
                 border-radius: 8px;
                 padding: 15px;
                 box-sizing: border-box;
                 text-align: center;
-                page-break-inside: avoid; /* يمنع قص التذكرة في نص الصفحة */
-                margin-bottom: 15px;
+                vertical-align: top; /* محاذاة من الأعلى */
+                /* منع قطع التذكرة بين صفحتين */
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
             }
+            
             .ticket-card h4 { margin: 0 0 10px 0; background: #eee !important; padding: 8px; border-radius: 4px; font-size: 16px; -webkit-print-color-adjust: exact; color-adjust: exact; }
             .ticket-card .group-name { font-size: 14px; font-weight: bold; margin-bottom: 10px; }
             .ticket-card .seat-number { font-size: 28px; font-weight: 800; color: #000; margin: 10px 0; border: 2px solid #000; display: inline-block; padding: 5px 20px; border-radius: 8px;}
