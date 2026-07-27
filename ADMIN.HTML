@@ -150,14 +150,6 @@
         .seat.empty-x { background: #eceff1; color: #b0bec5; border-color: #cfd8dc; pointer-events: none; }
         .seat.mixer-block { width: 132px; background: #2c3e50; color: #f1c40f; font-size: 12px; pointer-events: none; border-color: #111;}
         
-        /* Tooltip */
-        .seat::after {
-            content: attr(data-info); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
-            background: rgba(33, 47, 61, 0.95); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap;
-            opacity: 0; visibility: hidden; pointer-events: none; z-index: 100; font-family: 'Cairo', sans-serif;
-        }
-        .seat:hover::after { opacity: 1; visibility: visible; }
-        
         .seat-view-img { border-radius: 12px; border: 3px solid #ecf0f1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .swal2-container.swal-on-top { z-index: 999999 !important; }
 
@@ -216,7 +208,6 @@
                 </div>
             </div>
             
-            <!-- 🔴 صندوق التنبيهات الحية الجديد 🔴 -->
             <div class="control-box" style="border-color: #3498db; background-color: #ebf5fb;">
                 <h3 style="color: #2980b9;">📢 تنبيهات حية للمنظمين</h3>
                 <div class="vip-form">
@@ -261,12 +252,6 @@
             <div class="map-scroll-area" id="map-scroll-area">
                 <div class="stage-top">خشبة المسرح</div>
                 <div id="map-seating-area" class="seating-area" dir="ltr"></div>
-            </div>
-            <div class="map-legend" dir="rtl">
-                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #f0f0f0, #cacaca);"></div> متاح</div>
-                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #f1c40f, #f39c12);"></div> محجوز (لم يحضر)</div>
-                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #4CAF50, #2E7D32);"></div> حضر بالفعل</div>
-                <div class="map-legend-item"><div class="map-legend-box" style="background: linear-gradient(145deg, #9b59b6, #8e44ad);"></div> VIP</div>
             </div>
         </div>
     </div>
@@ -323,23 +308,29 @@
         let bookingsData = {};
         const TOTAL_SEATS = 403;
 
-        // --- 🔴 دالة إرسال التنبيهات الحية ---
+        // 🔴 التعديل هنا: إرسال الرسالة بـ ID فريد بدلاً من الاعتماد على التوقيت
         window.sendAdminAlert = async function() {
             const msg = document.getElementById('alert-message').value.trim();
             if (!msg) return Swal.fire('خطأ', 'يرجى كتابة التنبيه أولاً', 'warning');
 
-            await update(ref(db), {
-                'adminAlerts/current': {
-                    message: msg,
-                    timestamp: Date.now()
-                }
-            });
-            
-            Swal.fire({
-                toast: true, position: 'top-end', icon: 'success', 
-                title: 'تم إرسال التنبيه لجميع المنظمين!', showConfirmButton: false, timer: 3000
-            });
-            document.getElementById('alert-message').value = '';
+            const newAlertId = Date.now().toString(36) + Math.random().toString(36).substr(2); // كود فريد مستحيل يتكرر
+
+            try {
+                await update(ref(db), {
+                    'adminAlerts/current': {
+                        message: msg,
+                        id: newAlertId
+                    }
+                });
+                
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success', 
+                    title: 'تم إرسال التنبيه لجميع المنظمين!', showConfirmButton: false, timer: 3000
+                });
+                document.getElementById('alert-message').value = '';
+            } catch (error) {
+                Swal.fire('خطأ', 'حدثت مشكلة في الإتصال بقاعدة البيانات', 'error');
+            }
         }
 
         const theaterLayout = [
@@ -522,125 +513,6 @@
             link.download = "Bookings_Report.csv"; document.body.appendChild(link); link.click(); document.body.removeChild(link);
         }
 
-        window.printGuestList = function() {
-            if (Object.keys(bookingsData).length === 0) {
-                return Swal.fire('عفواً', 'لا يوجد حجوزات لطباعتها حتى الآن.', 'info');
-            }
-
-            const sortedSeats = getSortedSeats(); 
-
-            let printContent = `
-                <html>
-                <head>
-                    <title>كشف حضور مسرح المقر البابوي</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; direction: rtl; padding: 20px; }
-                        h2 { text-align: center; color: #2c3e50; border-bottom: 2px solid #000; padding-bottom: 10px; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-                        th, td { border: 1px solid #000; padding: 10px; text-align: center; }
-                        th { background-color: #f2f2f2; font-weight: bold; }
-                        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #555; }
-                    </style>
-                </head>
-                <body>
-                    <h2>📋 كشف حضور مسرح المقر البابوي</h2>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>رقم المقعد</th>
-                                <th>اسم الحاجز</th>
-                                <th>الكود / نوع الحجز</th>
-                                <th>التوقيع (للمطابقة اليدوية)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-
-            let counter = 1;
-            sortedSeats.forEach(seatId => {
-                const info = bookingsData[seatId];
-                printContent += `
-                    <tr>
-                        <td>${counter++}</td>
-                        <td style="font-weight: bold; font-size: 16px;">${seatId}</td>
-                        <td>${info.name}</td>
-                        <td>${info.code === 'VIP' ? 'VIP 👑' : info.code}</td>
-                        <td></td>
-                    </tr>
-                `;
-            });
-
-            printContent += `
-                        </tbody>
-                    </table>
-                    <div class="footer">
-                        تم إنشاء هذا الكشف بواسطة نظام <strong>Rave Technology</strong> - إجمالي الحجوزات: ${counter - 1}
-                    </div>
-                </body>
-                </html>
-            `;
-
-            const printWindow = window.open('', '_blank', 'width=800,height=600');
-            printWindow.document.write(printContent);
-            printWindow.document.close();
-            
-            setTimeout(() => { printWindow.print(); }, 500);
-        }
-
-        window.printNameTags = function() {
-            const vipSeats = getSortedSeats().filter(seatId => bookingsData[seatId].code === 'VIP');
-            
-            if (vipSeats.length === 0) {
-                return Swal.fire('عفواً', 'لا يوجد حجوزات VIP لطباعة بطاقات لها.', 'info');
-            }
-
-            let printContent = `
-                <html dir="rtl">
-                <head>
-                    <title>طباعة بطاقات VIP</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-                    <style>
-                        body { font-family: 'Cairo', sans-serif; padding: 0; margin: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 20px; background: #fff;}
-                        .badge-card {
-                            width: 9cm; height: 6cm; border: 2px dashed #95a5a6; border-radius: 10px;
-                            display: flex; flex-direction: column; align-items: center; justify-content: center;
-                            background: linear-gradient(to bottom, #fdfbf7, #fff); position: relative; overflow: hidden;
-                        }
-                        .badge-header { background: #2c3e50; color: #f1c40f; width: 100%; text-align: center; padding: 10px 0; font-weight: bold; position: absolute; top: 0; font-size: 16px;}
-                        .badge-name { font-size: 24px; font-weight: bold; color: #2c3e50; margin-top: 30px; text-align: center; padding: 0 10px;}
-                        .badge-role { font-size: 18px; color: #e74c3c; font-weight: bold; margin-top: 10px; border-bottom: 2px solid #e74c3c; padding-bottom: 5px;}
-                        .badge-seat { font-size: 20px; color: #2980b9; font-weight: bold; margin-top: 10px; }
-                        .badge-footer { font-size: 12px; color: #7f8c8d; position: absolute; bottom: 8px; }
-                        @media print {
-                            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                            .badge-card { page-break-inside: avoid; margin-bottom: 20px; }
-                        }
-                    </style>
-                </head>
-                <body>
-            `;
-
-            vipSeats.forEach(seatId => {
-                const info = bookingsData[seatId];
-                printContent += `
-                    <div class="badge-card">
-                        <div class="badge-header">مسرح المقر البابوي 🎭</div>
-                        <div class="badge-name">${info.name}</div>
-                        <div class="badge-role">VIP GUEST</div>
-                        <div class="badge-seat">مقعد رقم: ${seatId}</div>
-                        <div class="badge-footer">Rave Technology</div>
-                    </div>
-                `;
-            });
-
-            printContent += `</body></html>`;
-            const printWindow = window.open('', '_blank');
-            printWindow.document.write(printContent);
-            printWindow.document.close();
-            setTimeout(() => { printWindow.print(); }, 500);
-        }
-
         window.openMap = function() {
             document.getElementById('map-modal').style.display = 'flex';
             renderMap();
@@ -691,56 +563,22 @@
             const seatId = `${row}${num}`;
             seat.className = 'seat map-empty';
             seat.innerText = num;
-            seat.setAttribute('data-info', `مقعد ${seatId} - متاح (اضغط للمعاينة)`);
-
-            seat.onclick = () => showSeatView(seatId);
+            seat.setAttribute('data-info', `مقعد ${seatId} - متاح`);
 
             if (bookingsData[seatId]) {
                 const info = bookingsData[seatId];
                 if (info.code === 'VIP') {
                     seat.className = 'seat map-vip';
-                    seat.setAttribute('data-info', `VIP: ${info.name} (اضغط للمعاينة)`);
+                    seat.setAttribute('data-info', `VIP: ${info.name}`);
                 } else if (info.status === 'attended') {
                     seat.className = 'seat map-attended';
-                    seat.setAttribute('data-info', `حضر: ${info.name} (اضغط للمعاينة)`);
+                    seat.setAttribute('data-info', `حضر: ${info.name}`);
                 } else {
                     seat.className = 'seat map-pending';
-                    seat.setAttribute('data-info', `محجوز: ${info.name} (اضغط للمعاينة)`);
+                    seat.setAttribute('data-info', `محجوز: ${info.name}`);
                 }
             }
             return seat;
-        }
-
-        window.showSeatView = function(seatId) {
-            const row = seatId.charAt(0).toUpperCase();
-            let imageUrl = '';
-            let viewType = '';
-
-            if (['A', 'B', 'C', 'D', 'E', 'F'].includes(row)) {
-                imageUrl = 'https://placehold.co/600x350/2c3e50/ffffff?text=Front+View+(A-F)'; 
-                viewType = '👀 رؤية أمامية قريبة (Front View)';
-            } else if (['G', 'H', 'I', 'J', 'K', 'L'].includes(row)) {
-                imageUrl = 'https://placehold.co/600x350/8e44ad/ffffff?text=Middle+View+(G-L)'; 
-                viewType = '👀 رؤية متوسطة (Middle View)';
-            } else {
-                imageUrl = 'https://placehold.co/600x350/e74c3c/ffffff?text=Back+View+(M-R)'; 
-                viewType = '👀 رؤية بانورامية خلفية (Back View)';
-            }
-
-            Swal.fire({
-                target: document.getElementById('map-modal'), 
-                title: `رؤية مقعد ${seatId}`,
-                text: viewType,
-                imageUrl: imageUrl,
-                imageWidth: 600,
-                imageHeight: 350,
-                imageAlt: `رؤية من مقعد ${seatId}`,
-                confirmButtonText: 'إغلاق المعاينة',
-                confirmButtonColor: '#2c3e50',
-                customClass: {
-                    container: 'swal-on-top' 
-                }
-            });
         }
     </script>
 </body>
