@@ -14,7 +14,6 @@
         
         #main-app { display: none; padding-bottom: 20px; }
 
-        /* شريط حالة الاتصال */
         #connection-status {
             background-color: var(--success); color: white; text-align: center; padding: 8px;
             font-size: 14px; font-weight: bold; transition: background-color 0.3s;
@@ -62,13 +61,12 @@
 <body>
 
     <div id="main-app">
-        <!-- شريط حالة الإنترنت -->
         <div id="connection-status">
             🟢 متصل بالإنترنت (Live)
             <span id="sync-counter" class="sync-badge">0 معلق</span>
         </div>
 
-        <!-- 🔴 شريط التنبيهات الحية من الإدارة 🔴 -->
+        <!-- 🔴 شريط التنبيهات الحية 🔴 -->
         <div id="live-alert-banner">
             🚨 رسالة عاجلة من الإدارة: <span id="live-alert-text"></span>
         </div>
@@ -114,8 +112,8 @@
         let html5QrcodeScanner;
         let offlineSyncQueue = JSON.parse(localStorage.getItem('offlineSyncQueue')) || [];
         
-        // متغير لمنع ظهور التنبيهات القديمة عند فتح الصفحة
-        let lastAlertTime = Date.now(); 
+        let lastAlertId = null;
+        let isFirstAlertLoad = true; 
 
         function initApp() {
             const firebaseConfig = {
@@ -131,7 +129,6 @@
             const app = initializeApp(firebaseConfig);
             db = getDatabase(app);
 
-            // استماع للحجوزات لتحديث الذاكرة المحلية
             onValue(ref(db, 'bookings'), (snapshot) => {
                 if (navigator.onLine) {
                     const data = snapshot.val() || {};
@@ -139,40 +136,46 @@
                 }
             });
 
-            // 🔴 استماع لتنبيهات الإدارة الحية 🔴
+            // 🔴 التعديل هنا: استقبال الرسائل والتأكد من عدم حظر الصوت
             onValue(ref(db, 'adminAlerts/current'), (snapshot) => {
                 const data = snapshot.val();
-                if (data && data.timestamp > lastAlertTime) {
-                    lastAlertTime = data.timestamp;
-                    
-                    // 1. تشغيل صوت تنبيه
-                    try {
-                        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-                        audio.play();
-                    } catch(e) {}
+                
+                if (data && data.id) {
+                    if (isFirstAlertLoad) {
+                        // تجاهل الرسالة القديمة اللي متسجلة في السيرفر عند فتح الصفحة لأول مرة
+                        lastAlertId = data.id;
+                        isFirstAlertLoad = false;
+                    } else if (data.id !== lastAlertId) {
+                        lastAlertId = data.id;
+                        
+                        // 1. تشغيل صوت تنبيه مع تجنب حظر المتصفحات
+                        try {
+                            const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                            audio.play().catch(e => console.log("الصوت محظور من المتصفح مؤقتاً، ولكن سيتم عرض الإشعار."));
+                        } catch(e) {}
 
-                    // 2. إظهار إشعار منبثق لا يعطل الكاميرا (Toast)
-                    Swal.fire({
-                        toast: true, position: 'top', icon: 'warning',
-                        title: 'رسالة من الإدارة', text: data.message,
-                        showConfirmButton: false, timer: 8000, timerProgressBar: true
-                    });
+                        // 2. إظهار إشعار منبثق
+                        Swal.fire({
+                            toast: true, position: 'top', icon: 'warning',
+                            title: 'رسالة من الإدارة', text: data.message,
+                            showConfirmButton: false, timer: 8000, timerProgressBar: true
+                        });
 
-                    // 3. إظهار الشريط الأحمر الثابت
-                    const banner = document.getElementById('live-alert-banner');
-                    document.getElementById('live-alert-text').innerText = data.message;
-                    banner.style.display = 'block';
-                    
-                    // إخفاء الشريط تلقائياً بعد دقيقة
-                    setTimeout(() => { banner.style.display = 'none'; }, 60000);
+                        // 3. إظهار الشريط الأحمر الثابت
+                        const banner = document.getElementById('live-alert-banner');
+                        document.getElementById('live-alert-text').innerText = data.message;
+                        banner.style.display = 'block';
+                        
+                        setTimeout(() => { banner.style.display = 'none'; }, 60000);
+                    }
+                } else {
+                    isFirstAlertLoad = false;
                 }
             });
 
-            // تشغيل الكاميرا
             html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
             html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
-            // مراقبة حالة الإنترنت
             window.addEventListener('online', handleOnlineStatus);
             window.addEventListener('offline', handleOfflineStatus);
             
@@ -237,7 +240,7 @@
             processTicketCode(decodedText.trim().toUpperCase());
         }
 
-        function onScanFailure(error) { /* تجاهل الأخطاء العادية للكاميرا */ }
+        function onScanFailure(error) { }
 
         async function processTicketCode(codeToVerify) {
             let cachedBookings = JSON.parse(localStorage.getItem('cachedBookings')) || {};
