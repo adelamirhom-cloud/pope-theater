@@ -23,6 +23,18 @@
         .status-offline { background-color: var(--danger) !important; }
         .status-syncing { background-color: var(--warning) !important; }
 
+        /* شريط التنبيهات الحية */
+        #live-alert-banner {
+            display: none; background: #e74c3c; color: white; padding: 12px; text-align: center;
+            font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: flash 1.5s infinite; position: sticky; top: 38px; z-index: 99;
+        }
+        @keyframes flash {
+            0% { background-color: #e74c3c; }
+            50% { background-color: #c0392b; }
+            100% { background-color: #e74c3c; }
+        }
+
         .header { background: var(--primary); color: white; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
         .header p { margin: 5px 0 0 0; font-size: 12px; color: #bdc3c7; }
@@ -54,6 +66,11 @@
         <div id="connection-status">
             🟢 متصل بالإنترنت (Live)
             <span id="sync-counter" class="sync-badge">0 معلق</span>
+        </div>
+
+        <!-- 🔴 شريط التنبيهات الحية من الإدارة 🔴 -->
+        <div id="live-alert-banner">
+            🚨 رسالة عاجلة من الإدارة: <span id="live-alert-text"></span>
         </div>
 
         <div class="header">
@@ -95,8 +112,10 @@
 
         let db;
         let html5QrcodeScanner;
-        // مصفوفة لتخزين العمليات المعلقة أثناء انقطاع الإنترنت
         let offlineSyncQueue = JSON.parse(localStorage.getItem('offlineSyncQueue')) || [];
+        
+        // متغير لمنع ظهور التنبيهات القديمة عند فتح الصفحة
+        let lastAlertTime = Date.now(); 
 
         function initApp() {
             const firebaseConfig = {
@@ -112,12 +131,40 @@
             const app = initializeApp(firebaseConfig);
             db = getDatabase(app);
 
-            // استماع دائم لقاعدة البيانات لتحديث النسخة المحلية (طول ما فيه نت)
+            // استماع للحجوزات لتحديث الذاكرة المحلية
             onValue(ref(db, 'bookings'), (snapshot) => {
                 if (navigator.onLine) {
                     const data = snapshot.val() || {};
-                    // حفظ البيانات في الذاكرة المحلية لاستخدامها وقت انقطاع النت
                     localStorage.setItem('cachedBookings', JSON.stringify(data));
+                }
+            });
+
+            // 🔴 استماع لتنبيهات الإدارة الحية 🔴
+            onValue(ref(db, 'adminAlerts/current'), (snapshot) => {
+                const data = snapshot.val();
+                if (data && data.timestamp > lastAlertTime) {
+                    lastAlertTime = data.timestamp;
+                    
+                    // 1. تشغيل صوت تنبيه
+                    try {
+                        const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+                        audio.play();
+                    } catch(e) {}
+
+                    // 2. إظهار إشعار منبثق لا يعطل الكاميرا (Toast)
+                    Swal.fire({
+                        toast: true, position: 'top', icon: 'warning',
+                        title: 'رسالة من الإدارة', text: data.message,
+                        showConfirmButton: false, timer: 8000, timerProgressBar: true
+                    });
+
+                    // 3. إظهار الشريط الأحمر الثابت
+                    const banner = document.getElementById('live-alert-banner');
+                    document.getElementById('live-alert-text').innerText = data.message;
+                    banner.style.display = 'block';
+                    
+                    // إخفاء الشريط تلقائياً بعد دقيقة
+                    setTimeout(() => { banner.style.display = 'none'; }, 60000);
                 }
             });
 
@@ -129,7 +176,6 @@
             window.addEventListener('online', handleOnlineStatus);
             window.addEventListener('offline', handleOfflineStatus);
             
-            // تحديث الواجهة المبدئي
             if (!navigator.onLine) handleOfflineStatus();
             else handleOnlineStatus();
         }
@@ -146,7 +192,6 @@
             statusBar.className = 'status-syncing';
             statusBar.innerHTML = `🔄 جاري مزامنة البيانات...`;
             
-            // رفع البيانات المتأخرة
             if (offlineSyncQueue.length > 0) {
                 try {
                     const updates = {};
@@ -157,7 +202,6 @@
                     
                     await update(ref(db), updates);
                     
-                    // تفريغ طابور الانتظار بعد نجاح الرفع
                     offlineSyncQueue = [];
                     localStorage.setItem('offlineSyncQueue', JSON.stringify(offlineSyncQueue));
                 } catch (error) {
@@ -196,49 +240,35 @@
         function onScanFailure(error) { /* تجاهل الأخطاء العادية للكاميرا */ }
 
         async function processTicketCode(codeToVerify) {
-            // جلب البيانات من الذاكرة المحلية (Cache) دايماً لضمان السرعة القصوى سواء أونلاين أو أوفلاين
             let cachedBookings = JSON.parse(localStorage.getItem('cachedBookings')) || {};
-            
-            let foundSeat = null;
-            let ticketData = null;
+            let foundSeat = null; let ticketData = null;
 
             for (const seatId in cachedBookings) {
                 if (cachedBookings[seatId].code && cachedBookings[seatId].code.toUpperCase() === codeToVerify) {
-                    foundSeat = seatId;
-                    ticketData = cachedBookings[seatId];
-                    break;
+                    foundSeat = seatId; ticketData = cachedBookings[seatId]; break;
                 }
             }
 
             if (ticketData) {
                 if (ticketData.status === 'attended') {
-                    // التذكرة مستخدمة من قبل
                     Swal.fire({
-                        icon: 'error',
-                        title: 'تذكرة مستخدمة مسبقاً! ❌',
+                        icon: 'error', title: 'تذكرة مستخدمة مسبقاً! ❌',
                         html: `مقعد: <b>${foundSeat}</b><br>الاسم: ${ticketData.name}<br>تم دخول هذا الشخص بالفعل.`,
-                        confirmButtonText: 'موافق',
-                        confirmButtonColor: '#e74c3c'
+                        confirmButtonText: 'موافق', confirmButtonColor: '#e74c3c'
                     }).then(() => { if(html5QrcodeScanner.getState() === 2) html5QrcodeScanner.resume(); });
                 } else {
-                    // التذكرة صالحة - تسجيل الدخول
-                    
-                    // 1. تحديث الذاكرة المحلية فوراً (عشان لو عمل سكان نفس التذكرة وهو لسه أوفلاين تترفض)
                     cachedBookings[foundSeat].status = 'attended';
                     localStorage.setItem('cachedBookings', JSON.stringify(cachedBookings));
 
-                    // 2. تحديث السيرفر أو طابور الانتظار بناءً على حالة النت
                     if (navigator.onLine) {
                         try {
                             await update(ref(db, `bookings/${foundSeat}`), { status: 'attended', attendedAt: new Date().toISOString() });
                         } catch (error) {
-                            // لو النت فصل في اللحظة دي، ضيفها للطابور
                             offlineSyncQueue.push(foundSeat);
                             localStorage.setItem('offlineSyncQueue', JSON.stringify(offlineSyncQueue));
                             updateSyncCounter();
                         }
                     } else {
-                        // أوفلاين: إضافة لقائمة الانتظار
                         if (!offlineSyncQueue.includes(foundSeat)) {
                             offlineSyncQueue.push(foundSeat);
                             localStorage.setItem('offlineSyncQueue', JSON.stringify(offlineSyncQueue));
@@ -246,24 +276,17 @@
                         }
                     }
 
-                    // 3. إظهار رسالة النجاح فوراً
                     Swal.fire({
-                        icon: 'success',
-                        title: 'تذكرة صالحة - دخول ✅',
+                        icon: 'success', title: 'تذكرة صالحة - دخول ✅',
                         html: `مقعد: <b>${foundSeat}</b><br>الاسم: ${ticketData.name}<br>تفضل بالدخول.`,
-                        confirmButtonText: 'التالي',
-                        confirmButtonColor: '#27ae60',
-                        timer: 2000 // تقفل أوتوماتيك بعد ثانيتين لسرعة الشغل
+                        confirmButtonText: 'التالي', confirmButtonColor: '#27ae60', timer: 2000
                     }).then(() => { if(html5QrcodeScanner.getState() === 2) html5QrcodeScanner.resume(); });
                 }
             } else {
-                // كود مزيف أو غير موجود
                 Swal.fire({
-                    icon: 'warning',
-                    title: 'كود غير صحيح! ⚠️',
+                    icon: 'warning', title: 'كود غير صحيح! ⚠️',
                     text: 'هذا الكود غير مسجل في قاعدة البيانات.',
-                    confirmButtonText: 'موافق',
-                    confirmButtonColor: '#f39c12'
+                    confirmButtonText: 'موافق', confirmButtonColor: '#f39c12'
                 }).then(() => { if(html5QrcodeScanner.getState() === 2) html5QrcodeScanner.resume(); });
             }
         }
