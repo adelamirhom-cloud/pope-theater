@@ -35,7 +35,12 @@
             border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); 
         }
         
-        /* تحسين التمرير وإخفاء الشريط الأفقي */
+        /* أزرار التبديل بين الصالة والبلكونة */
+        .floor-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;}
+        .floor-btn { padding: 12px 30px; border: 2px solid #2980b9; background: transparent; color: #2980b9; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.3s; font-family: inherit;}
+        .floor-btn.active { background: #2980b9; color: white; box-shadow: 0 4px 10px rgba(41, 128, 185, 0.3);}
+        .floor-btn:hover:not(.active) { background: #ebf5fb; }
+
         .scroll-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; direction: rtl; padding-bottom: 20px; scroll-behavior: smooth; }
         .scroll-container::-webkit-scrollbar { display: none; }
         .scroll-container { -ms-overflow-style: none; scrollbar-width: none; }
@@ -45,7 +50,7 @@
         .stage-top { 
             background: linear-gradient(145deg, #8d6e63, #5d4037); color: #ffecb3; font-size: 28px; 
             font-weight: 700; padding: 20px; margin-bottom: 35px; border-radius: 12px 12px 60px 60px; 
-            box-shadow: 0 8px 15px rgba(93, 64, 55, 0.3), inset 0 -3px 10px rgba(0,0,0,0.2); letter-spacing: 2px;
+            box-shadow: 0 8px 15px rgba(93, 64, 55, 0.3), inset 0 -3px 10px rgba(0,0,0,0.2); letter-spacing: 2px; transition: 0.3s;
         }
 
         #seating-area { display: flex; flex-direction: column; gap: 8px; }
@@ -59,7 +64,6 @@
             transition: all 0.2s; user-select: none; flex-shrink: 0; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); position: relative; 
         }
         
-        /* التلميحات Tooltips */
         .seat::after {
             content: attr(data-info); position: absolute; bottom: 125%; left: 50%; transform: translateX(-50%);
             background: rgba(33, 47, 61, 0.95); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 12px; white-space: nowrap;
@@ -164,9 +168,16 @@
 
     <!-- منطقة المسرح -->
     <div class="theater-wrapper">
+        
+        <!-- أزرار التبديل بين الصالة والبلكونة -->
+        <div class="floor-toggle">
+            <button id="btn-main" class="floor-btn active" onclick="switchFloor('main')">الصالة الرئيسية</button>
+            <button id="btn-balcony" class="floor-btn" onclick="switchFloor('balcony')">البلكونة (70 مقعد)</button>
+        </div>
+
         <div class="scroll-container">
             <div class="theater-inner">
-                <div class="stage-top">خشبة المسرح</div>
+                <div id="stage-display" class="stage-top">خشبة المسرح</div>
                 <div id="seating-area"></div>
             </div>
         </div>
@@ -233,7 +244,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // أكواد التذاكر المسموحة (يمكنك إضافة جميع الـ 403 كود هنا)
+        // 🔴 إضافة الـ 416 كود يدوياً بالظبط زي ما طلبت
         const validTicketCodes = [
             "Q7L2X9", "B5M8K3", "P4V9R1", "W3J6H7", "C8T1F2", "Z9N5D4", "G2X7Y8", "M1K4B6", "R6H3P9", "D8F2V5",
             "X5T7C1", "L9Q4N2", "Y3M1Z8", "K6B5W7", "V2R8J3", "H7P6D9", "F1C4T2", "N4Z9G5", "J8X2M1", "T5V7R6",
@@ -275,11 +286,11 @@
             "V9F7P3", "M8V4T1", "R5C9K2", "D7P3M5", "H4F6B8", "F1V2C9", "N8M7P4", "L9K3V1", "Y2C5F6", "T3V8M9",
             "C7F4P1", "B1M6D8", "P9C2K5", "V5T1F3", "M2V9C8", "Q4P5M7", "R9K1V6", "H7C8T2", "F3P4B5", "N6V1K9",
             "D1F9M4", "L3C2P7", "X5M8V1", "T8F3C6", "C4V7K2", "B5P1M9", "P7D6V4", "V3C9F8", "M6K2P5", "R4V8M1",
-            "H1T5C9", "F9B4V2", "N2C1P7",
-            "W9X2M4", "K7P5R1", "V4J8D9", "Q2L6N3", "B5C9F7", "H1Z4T8", "X6G3V2", "M9Y5K1", "R3W7P4", "D8N2L6", 
-            "F4T9C5", "Z1V6G8", "P7B3H2", "N5M1Y9", "L2Q8X4", "T6R4W7", "C9K2P5", "V8J5D1", "G3L9N6", "Y7F1C4"
+            "H1T5C9", "F9B4V2", "N2C1P7", "W9X2M4", "K7P5R1", "V4J8D9", "Q2L6N3", "B5C9F7", "H1Z4T8", "X6G3V2",
+            "M9Y5K1", "R3W7P4", "D8N2L6", "F4T9C5", "Z1V6G8", "P7B3H2"
         ];
 
+        // خريطة الصالة الرئيسية
         const layout = [
             { row: 'A', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,-1] },
             { row: 'B', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
@@ -302,9 +313,45 @@
             { row: 'R', farOdd: [23,21,19,17], mainOdd: [0,0,0,9,7,5,3,1],    mainEven: [2,4,6,8,10,0,0],   farEven: [16,18,20,22] }
         ];
 
+        // خريطة البلكونة
+        const balconyLayout = [
+            { row: 'BA', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BB', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BC', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BD', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BE', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] }
+        ];
+
         const seatingArea = document.getElementById('seating-area');
         let selectedSeats = [];
         let globalLocks = {}; 
+        let globalBookingsList = [];
+        let currentFloor = 'main';
+
+        window.switchFloor = function(floor) {
+            currentFloor = floor;
+            document.getElementById('btn-main').classList.toggle('active', floor === 'main');
+            document.getElementById('btn-balcony').classList.toggle('active', floor === 'balcony');
+            
+            const stage = document.getElementById('stage-display');
+            if(floor === 'balcony') {
+                stage.innerText = 'سور البلكونة الأمامي';
+                stage.style.background = 'linear-gradient(145deg, #7f8c8d, #34495e)';
+            } else {
+                stage.innerText = 'خشبة المسرح';
+                stage.style.background = 'linear-gradient(145deg, #8d6e63, #5d4037)';
+            }
+            
+            if (selectedSeats.length > 0) {
+                remove(ref(db, 'lockedSeats/' + selectedSeats[0]));
+                selectedSeats = [];
+                updateSummary();
+            }
+
+            generateSeats();
+            applyBookingsToDOM();
+            renderLocks();
+        }
 
         function updateCountdown() {
             const eventDate = new Date("2026-09-22T19:00:00").getTime();
@@ -321,20 +368,26 @@
         updateCountdown();
 
         function generateSeats() {
-            layout.forEach(rowData => {
+            seatingArea.innerHTML = '';
+            const activeLayout = currentFloor === 'main' ? layout : balconyLayout;
+
+            activeLayout.forEach(rowData => {
                 if (rowData.isDivider) {
                     const div = document.createElement('div'); div.className = 'door-divider'; div.innerText = rowData.text;
                     seatingArea.appendChild(div); return;
                 }
                 const rowDiv = document.createElement('div'); rowDiv.className = 'row';
                 const leftIndicator = document.createElement('div'); leftIndicator.className = 'side-indicator';
-                if (['A','B','C','D'].includes(rowData.row)) {
-                    leftIndicator.classList.add('stairs-indicator');
-                    if (rowData.row === 'A') leftIndicator.classList.add('first');
-                    if (rowData.row === 'D') leftIndicator.classList.add('last');
-                    if (rowData.row === 'B') leftIndicator.innerHTML = '<span>سلم</span>';
-                    if (rowData.row === 'C') leftIndicator.innerHTML = '<span>المسرح</span>';
-                } else if (rowData.row === 'E') { leftIndicator.classList.add('door-indicator'); leftIndicator.innerHTML = '<span>🚪 الباب</span>'; }
+                
+                if (currentFloor === 'main') {
+                    if (['A','B','C','D'].includes(rowData.row)) {
+                        leftIndicator.classList.add('stairs-indicator');
+                        if (rowData.row === 'A') leftIndicator.classList.add('first');
+                        if (rowData.row === 'D') leftIndicator.classList.add('last');
+                        if (rowData.row === 'B') leftIndicator.innerHTML = '<span>سلم</span>';
+                        if (rowData.row === 'C') leftIndicator.innerHTML = '<span>المسرح</span>';
+                    } else if (rowData.row === 'E') { leftIndicator.classList.add('door-indicator'); leftIndicator.innerHTML = '<span>🚪 الباب</span>'; }
+                }
                 rowDiv.appendChild(leftIndicator);
 
                 const farOddGroup = document.createElement('div'); farOddGroup.className = 'seat-group';
@@ -435,26 +488,30 @@
         }
         setInterval(renderLocks, 5000);
 
+        function applyBookingsToDOM() {
+            document.querySelectorAll('.seat.booked').forEach(seat => { 
+                seat.classList.remove('booked'); 
+                seat.setAttribute('data-info', `مقعد ${seat.id.replace('seat-','')} - متاح`);
+            });
+            
+            globalBookingsList.forEach(seatId => {
+                const seatElement = document.getElementById(`seat-${seatId}`);
+                if (seatElement) { 
+                    seatElement.classList.remove('selected'); 
+                    seatElement.classList.remove('locked'); 
+                    seatElement.classList.add('booked'); 
+                    seatElement.setAttribute('data-info', `مقعد ${seatId} - محجوز`);
+                }
+            });
+            selectedSeats = selectedSeats.filter(seatId => !globalBookingsList.includes(seatId));
+            updateSummary();
+        }
+
         function listenToBookings() {
             onValue(ref(db, 'bookings'), (snapshot) => {
-                const data = snapshot.val() || {}; const bookedSeatsList = Object.keys(data);
-                
-                document.querySelectorAll('.seat.booked').forEach(seat => { 
-                    seat.classList.remove('booked'); 
-                    seat.setAttribute('data-info', `مقعد ${seat.id.replace('seat-','')} - متاح`);
-                });
-                
-                bookedSeatsList.forEach(seatId => {
-                    const seatElement = document.getElementById(`seat-${seatId}`);
-                    if (seatElement) { 
-                        seatElement.classList.remove('selected'); 
-                        seatElement.classList.remove('locked'); 
-                        seatElement.classList.add('booked'); 
-                        seatElement.setAttribute('data-info', `مقعد ${seatId} - محجوز`);
-                    }
-                });
-                selectedSeats = selectedSeats.filter(seatId => !bookedSeatsList.includes(seatId));
-                updateSummary();
+                const data = snapshot.val() || {}; 
+                globalBookingsList = Object.keys(data);
+                applyBookingsToDOM();
             });
         }
 
@@ -500,7 +557,12 @@
 
             if(selectedSeats.length === 0) { Swal.fire({ icon: 'error', title: 'خطأ', text: 'حدد مقعداً أولاً.', confirmButtonColor: '#e74c3c' }); return; }
             if(!userName || !ticketCode) { Swal.fire({ icon: 'warning', title: 'بيانات ناقصة', text: 'أدخل الاسم والكود.', confirmButtonColor: '#f39c12' }); return; }
-            if (!validTicketCodes.includes(ticketCode)) { Swal.fire({ icon: 'error', title: 'كود غير صحيح', text: 'عفواً، كود التيكت هذا غير صحيح أو غير مسجل في النظام.', confirmButtonColor: '#e74c3c' }); return; }
+            
+            // 🔴 التحقق الصارم إن الكود موجود من ضمن الـ 416 بس
+            if (!validTicketCodes.includes(ticketCode)) { 
+                Swal.fire({ icon: 'error', title: 'كود غير صحيح', text: 'عفواً، كود التيكت هذا غير صحيح أو غير مسجل في النظام.', confirmButtonColor: '#e74c3c' }); 
+                return; 
+            }
 
             const confirmBtn = document.getElementById('confirm-btn');
             const btnText = document.getElementById('btn-text');
@@ -518,7 +580,15 @@
 
                 const seatId = selectedSeats[0];
                 const updates = {};
-                updates['/bookings/' + seatId] = { name: userName, code: ticketCode, bookedAt: new Date().toISOString(), status: "confirmed" };
+                
+                // 🔴 الإضافة السحرية لصفحة الخزينة (source: "online")
+                updates['/bookings/' + seatId] = { 
+                    name: userName, 
+                    code: ticketCode, 
+                    bookedAt: new Date().toISOString(), 
+                    status: "confirmed",
+                    source: "online"
+                };
                 updates['/usedCodes/' + ticketCode] = true;
                 updates['/lockedSeats/' + seatId] = null; 
 
