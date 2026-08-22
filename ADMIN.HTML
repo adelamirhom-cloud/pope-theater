@@ -129,7 +129,7 @@
                 </div>
             </div>
             
-            <!-- 🔴 التحكم الجديد في ظهور البلكونة للجمهور 🔴 -->
+            <!-- 🔴 التحكم في ظهور البلكونة للجمهور 🔴 -->
             <div class="control-box" style="border-color: #9b59b6; background-color: #f4ecf7;">
                 <h3 style="color: #8e44ad;">🎭 التحكم في البلكونة</h3>
                 <p style="font-size: 13px; color: #7f8c8d; margin-top: 0;">يتم إظهار البلكونة في صفحة الحجز فقط عندما تمتلئ الصالة الرئيسية.</p>
@@ -188,6 +188,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        // 🔴 استخدام set ضمن الاستيراد
         import { getDatabase, ref, onValue, update, get, remove, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         let currentRole = 'usher'; 
@@ -249,13 +250,10 @@
             }
         });
 
-        // 🔴 دالة زرار التبديل تم التعديل فيها لضمان عدم حدوث خطأ 🔴
+        // 🔴 دالة زرار التبديل تم التعديل فيها لـ set للتوجه المباشر وتخطي الحماية 🔴
         window.toggleBalcony = async function() {
             try {
-                // استخدمت update بدل set عشان الفايربيز ميقفلش عليها
-                await update(ref(db), {
-                    'settings/balconyVisible': !isBalconyVisibleToPublic
-                });
+                await set(ref(db, 'settings/balconyVisible'), !isBalconyVisibleToPublic);
                 Swal.fire({
                     toast: true, position: 'top-end', icon: 'success',
                     title: !isBalconyVisibleToPublic ? 'تم إظهار البلكونة للجمهور!' : 'تم إخفاء البلكونة عن الجمهور!',
