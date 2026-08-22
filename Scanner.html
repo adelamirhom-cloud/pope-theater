@@ -1,298 +1,105 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة الدخول (Scanner) | مسرح المقر البابوي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+// 1. تشغيل الكاميرا بإعدادات فائقة السرعة للقط الفوري
+const html5QrCode = new Html5Qrcode("reader");
 
-    <style>
-        :root { --primary: #2c3e50; --accent: #1abc9c; --danger: #e74c3c; --success: #27ae60; --warning: #f39c12; }
-        body { font-family: 'Cairo', sans-serif; background-color: #f4f6f7; margin: 0; color: #333; }
+const config = { 
+    fps: 25, // فحص فائق السرعة (25 إطار في الثانية)
+    qrbox: (viewfinderWidth, viewfinderHeight) => {
+        // مساحة التقاط واسعة تشمل 80% من الكادر لسرعة الفوكس
+        const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+        return { width: Math.floor(minEdge * 0.8), height: Math.floor(minEdge * 0.8) };
+    },
+    aspectRatio: 1.0
+};
+
+html5QrCode.start(
+    { facingMode: "environment" }, 
+    config, 
+    onScanSuccess, 
+    onScanFailure
+);
+
+let isProcessing = false;
+
+async function onScanSuccess(decodedText) {
+    if (isProcessing) return;
+    isProcessing = true;
+
+    // إيقاف الفحص مؤقتاً أثناء عرض بيانات التذكرة
+    html5QrCode.pause(true);
+
+    const ticketCode = decodedText.trim().toUpperCase();
+    await verifyAndShowTicket(ticketCode);
+}
+
+function onScanFailure(error) {
+    // تجاهل إطارات الفحص الفارغة
+}
+
+// 2. التحقق وعرض النافذة الثابتة (لا تختفي إلا بالضغط)
+async function verifyAndShowTicket(code) {
+    try {
+        // البحث عن المقعد المرتبط بالكود
+        const snapshot = await get(ref(db, 'bookings'));
+        const bookings = snapshot.val() || {};
         
-        #main-app { display: none; padding-bottom: 20px; }
+        let foundSeat = null;
+        let guestData = null;
 
-        #connection-status {
-            background-color: var(--success); color: white; text-align: center; padding: 8px;
-            font-size: 14px; font-weight: bold; transition: background-color 0.3s;
-            position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .status-offline { background-color: var(--danger) !important; }
-        .status-syncing { background-color: var(--warning) !important; }
-
-        /* شريط التنبيهات الحية */
-        #live-alert-banner {
-            display: none; background: #e74c3c; color: white; padding: 12px; text-align: center;
-            font-weight: bold; font-size: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            animation: flash 1.5s infinite; position: sticky; top: 38px; z-index: 99;
-        }
-        @keyframes flash {
-            0% { background-color: #e74c3c; }
-            50% { background-color: #c0392b; }
-            100% { background-color: #e74c3c; }
-        }
-
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .header h1 { margin: 0; font-size: 20px; font-weight: 800; }
-        .header p { margin: 5px 0 0 0; font-size: 12px; color: #bdc3c7; }
-
-        .container { max-width: 500px; margin: 0 auto; padding: 0 15px; }
-
-        .scanner-card { background: #fff; border-radius: 12px; padding: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: center; border: 2px solid #ecf0f1; }
-        .scanner-card h3 { margin: 0 0 15px 0; font-size: 16px; color: var(--primary); }
-        #reader { width: 100%; border-radius: 8px; overflow: hidden; border: 2px dashed var(--accent); }
-
-        .manual-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 2px solid #ecf0f1; }
-        .manual-card h3 { margin: 0 0 15px 0; font-size: 16px; color: var(--primary); display: flex; align-items: center; gap: 8px; }
-        
-        .input-group { display: flex; gap: 10px; }
-        .input-group input { flex: 1; padding: 12px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 16px; font-family: inherit; font-weight: bold; text-align: center; outline: none; text-transform: uppercase; }
-        .input-group input:focus { border-color: var(--accent); }
-        .btn-check { background: var(--primary); color: white; border: none; padding: 0 20px; border-radius: 8px; font-size: 16px; font-weight: bold; font-family: inherit; cursor: pointer; transition: 0.3s; }
-        .btn-check:hover { background: #1a252f; }
-        
-        .sync-badge { font-size: 12px; background: white; color: var(--primary); padding: 2px 8px; border-radius: 12px; margin-right: 10px; display: none; }
-
-        #reader__dashboard_section_csr span { display: none !important; }
-    </style>
-</head>
-<body>
-
-    <div id="main-app">
-        <div id="connection-status">
-            🟢 متصل بالإنترنت (Live)
-            <span id="sync-counter" class="sync-badge">0 معلق</span>
-        </div>
-
-        <!-- 🔴 شريط التنبيهات الحية 🔴 -->
-        <div id="live-alert-banner">
-            🚨 رسالة عاجلة من الإدارة: <span id="live-alert-text"></span>
-        </div>
-
-        <div class="header">
-            <h1>🛡️ بوابة الدخول الإلكترونية</h1>
-            <p>Rave Technology Solutions - مسرح المقر البابوي</p>
-        </div>
-
-        <div class="container">
-            <div class="manual-card">
-                <h3>⌨️ إدخال كود التذكرة يدوياً</h3>
-                <div class="input-group">
-                    <input type="text" id="manual-code" placeholder="أدخل الكود هنا...">
-                    <button class="btn-check" onclick="handleManualSubmit()">تحقق</button>
-                </div>
-            </div>
-
-            <div class="scanner-card">
-                <h3>📷 مسح الـ QR Code</h3>
-                <div id="reader"></div>
-            </div>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
-        Swal.fire({
-            title: 'دخول فريق الأمن', input: 'password', inputPlaceholder: 'كلمة المرور...',
-            allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#2c3e50'
-        }).then((result) => {
-            if (result.value === 'avatege2019') {
-                document.getElementById('main-app').style.display = 'block';
-                initApp();
-            } else {
-                document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
+        for (const [seatId, data] of Object.entries(bookings)) {
+            if (data.code === code) {
+                foundSeat = seatId;
+                guestData = data;
+                break;
             }
-        });
+        }
 
-        let db;
-        let html5QrcodeScanner;
-        let offlineSyncQueue = JSON.parse(localStorage.getItem('offlineSyncQueue')) || [];
-        
-        let lastAlertId = null;
-        let isFirstAlertLoad = true; 
-
-        function initApp() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
-                authDomain: "test-49b8c.firebaseapp.com",
-                projectId: "test-49b8c",
-                storageBucket: "test-49b8c.firebasestorage.app",
-                messagingSenderId: "658085082590",
-                appId: "1:658085082590:web:632f798dca5a87e2da994f",
-                measurementId: "G-G0SHP0PBR0",
-                databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
-            };
-            const app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
-
-            onValue(ref(db, 'bookings'), (snapshot) => {
-                if (navigator.onLine) {
-                    const data = snapshot.val() || {};
-                    localStorage.setItem('cachedBookings', JSON.stringify(data));
-                }
+        if (!foundSeat) {
+            // كود غير موجود
+            await Swal.fire({
+                icon: 'error',
+                title: 'تذكرة غير صالحة ❌',
+                text: 'هذا الكود غير مسجل في النظام أو تم إلغاؤه.',
+                confirmButtonText: 'مسح تذكرة أخرى',
+                confirmButtonColor: '#e74c3c',
+                allowOutsideClick: false
+            });
+        } else if (guestData.status === 'attended') {
+            // كود مستخدم مسبقاً
+            await Swal.fire({
+                icon: 'warning',
+                title: 'مستخدمة مسبقاً ⚠️',
+                html: `تم تسجيل دخول هذه التذكرة بالفعل!<br><br><b>المقعد:</b> ${foundSeat}<br><b>الاسم:</b> ${guestData.name}`,
+                confirmButtonText: 'تخطي ومتابعة',
+                confirmButtonColor: '#f39c12',
+                allowOutsideClick: false
+            });
+        } else {
+            // تذكرة صحيحة - تسجيل الحضور وعرض النافذة الثابتة
+            await update(ref(db, `bookings/${foundSeat}`), {
+                status: 'attended',
+                attendedAt: new Date().toISOString()
             });
 
-            // 🔴 التعديل هنا: استقبال الرسائل والتأكد من عدم حظر الصوت
-            onValue(ref(db, 'adminAlerts/current'), (snapshot) => {
-                const data = snapshot.val();
-                
-                if (data && data.id) {
-                    if (isFirstAlertLoad) {
-                        // تجاهل الرسالة القديمة اللي متسجلة في السيرفر عند فتح الصفحة لأول مرة
-                        lastAlertId = data.id;
-                        isFirstAlertLoad = false;
-                    } else if (data.id !== lastAlertId) {
-                        lastAlertId = data.id;
-                        
-                        // 1. تشغيل صوت تنبيه مع تجنب حظر المتصفحات
-                        try {
-                            const audio = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-                            audio.play().catch(e => console.log("الصوت محظور من المتصفح مؤقتاً، ولكن سيتم عرض الإشعار."));
-                        } catch(e) {}
-
-                        // 2. إظهار إشعار منبثق
-                        Swal.fire({
-                            toast: true, position: 'top', icon: 'warning',
-                            title: 'رسالة من الإدارة', text: data.message,
-                            showConfirmButton: false, timer: 8000, timerProgressBar: true
-                        });
-
-                        // 3. إظهار الشريط الأحمر الثابت
-                        const banner = document.getElementById('live-alert-banner');
-                        document.getElementById('live-alert-text').innerText = data.message;
-                        banner.style.display = 'block';
-                        
-                        setTimeout(() => { banner.style.display = 'none'; }, 60000);
-                    }
-                } else {
-                    isFirstAlertLoad = false;
-                }
+            await Swal.fire({
+                icon: 'success',
+                title: 'تم تأكيد الدخول ✅',
+                html: `
+                    <div style="text-align: right; font-size: 16px; margin-top: 10px;">
+                        <p><b>رقم المقعد:</b> <span style="color: #27ae60; font-size: 20px; font-weight: bold;">${foundSeat}</span></p>
+                        <p><b>اسم الضيف:</b> ${guestData.name}</p>
+                        <p><b>كود التذكرة:</b> ${code}</p>
+                    </div>
+                `,
+                confirmButtonText: 'موافق (التذكرة التالية)',
+                confirmButtonColor: '#2c3e50',
+                allowOutsideClick: false
             });
-
-            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false);
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-
-            window.addEventListener('online', handleOnlineStatus);
-            window.addEventListener('offline', handleOfflineStatus);
-            
-            if (!navigator.onLine) handleOfflineStatus();
-            else handleOnlineStatus();
         }
-
-        function handleOfflineStatus() {
-            const statusBar = document.getElementById('connection-status');
-            statusBar.className = 'status-offline';
-            statusBar.innerHTML = `🔴 وضع عدم الاتصال (أوفلاين) - جاري العمل بالذاكرة المحلية <span id="sync-counter" class="sync-badge"></span>`;
-            updateSyncCounter();
-        }
-
-        async function handleOnlineStatus() {
-            const statusBar = document.getElementById('connection-status');
-            statusBar.className = 'status-syncing';
-            statusBar.innerHTML = `🔄 جاري مزامنة البيانات...`;
-            
-            if (offlineSyncQueue.length > 0) {
-                try {
-                    const updates = {};
-                    offlineSyncQueue.forEach(seatId => {
-                        updates[`/bookings/${seatId}/status`] = 'attended';
-                        updates[`/bookings/${seatId}/attendedAt`] = new Date().toISOString();
-                    });
-                    
-                    await update(ref(db), updates);
-                    
-                    offlineSyncQueue = [];
-                    localStorage.setItem('offlineSyncQueue', JSON.stringify(offlineSyncQueue));
-                } catch (error) {
-                    console.error("فشل في المزامنة", error);
-                }
-            }
-
-            statusBar.className = '';
-            statusBar.innerHTML = `🟢 متصل بالإنترنت (Live) <span id="sync-counter" class="sync-badge" style="display:none;"></span>`;
-        }
-
-        function updateSyncCounter() {
-            const counterElement = document.getElementById('sync-counter');
-            if (counterElement) {
-                if (offlineSyncQueue.length > 0) {
-                    counterElement.style.display = 'inline-block';
-                    counterElement.innerText = `${offlineSyncQueue.length} معلق`;
-                } else {
-                    counterElement.style.display = 'none';
-                }
-            }
-        }
-
-        window.handleManualSubmit = function() {
-            const codeInput = document.getElementById('manual-code').value.trim().toUpperCase();
-            if(!codeInput) return Swal.fire('تنبيه', 'يرجى كتابة الكود أولاً', 'warning');
-            processTicketCode(codeInput);
-            document.getElementById('manual-code').value = ''; 
-        }
-
-        function onScanSuccess(decodedText) {
-            html5QrcodeScanner.pause();
-            processTicketCode(decodedText.trim().toUpperCase());
-        }
-
-        function onScanFailure(error) { }
-
-        async function processTicketCode(codeToVerify) {
-            let cachedBookings = JSON.parse(localStorage.getItem('cachedBookings')) || {};
-            let foundSeat = null; let ticketData = null;
-
-            for (const seatId in cachedBookings) {
-                if (cachedBookings[seatId].code && cachedBookings[seatId].code.toUpperCase() === codeToVerify) {
-                    foundSeat = seatId; ticketData = cachedBookings[seatId]; break;
-                }
-            }
-
-            if (ticketData) {
-                if (ticketData.status === 'attended') {
-                    Swal.fire({
-                        icon: 'error', title: 'تذكرة مستخدمة مسبقاً! ❌',
-                        html: `مقعد: <b>${foundSeat}</b><br>الاسم: ${ticketData.name}<br>تم دخول هذا الشخص بالفعل.`,
-                        confirmButtonText: 'موافق', confirmButtonColor: '#e74c3c'
-                    }).then(() => { if(html5QrcodeScanner.getState() === 2) html5QrcodeScanner.resume(); });
-                } else {
-                    cachedBookings[foundSeat].status = 'attended';
-                    localStorage.setItem('cachedBookings', JSON.stringify(cachedBookings));
-
-                    if (navigator.onLine) {
-                        try {
-                            await update(ref(db, `bookings/${foundSeat}`), { status: 'attended', attendedAt: new Date().toISOString() });
-                        } catch (error) {
-                            offlineSyncQueue.push(foundSeat);
-                            localStorage.setItem('offlineSyncQueue', JSON.stringify(offlineSyncQueue));
-                            updateSyncCounter();
-                        }
-                    } else {
-                        if (!offlineSyncQueue.includes(foundSeat)) {
-                            offlineSyncQueue.push(foundSeat);
-                            localStorage.setItem('offlineSyncQueue', JSON.stringify(offlineSyncQueue));
-                            updateSyncCounter();
-                        }
-                    }
-
-                    Swal.fire({
-                        icon: 'success', title: 'تذكرة صالحة - دخول ✅',
-                        html: `مقعد: <b>${foundSeat}</b><br>الاسم: ${ticketData.name}<br>تفضل بالدخول.`,
-                        confirmButtonText: 'التالي', confirmButtonColor: '#27ae60', timer: 2000
-                    }).then(() => { if(html5QrcodeScanner.getState() === 2) html5QrcodeScanner.resume(); });
-                }
-            } else {
-                Swal.fire({
-                    icon: 'warning', title: 'كود غير صحيح! ⚠️',
-                    text: 'هذا الكود غير مسجل في قاعدة البيانات.',
-                    confirmButtonText: 'موافق', confirmButtonColor: '#f39c12'
-                }).then(() => { if(html5QrcodeScanner.getState() === 2) html5QrcodeScanner.resume(); });
-            }
-        }
-    </script>
-</body>
-</html>
+    } catch (err) {
+        await Swal.fire('خطأ', 'حدثت مشكلة أثناء الاتصال بقاعدة البيانات', 'error');
+    } finally {
+        // استئناف الكاميرا للمسح التالي بعد الضغط على الزرار
+        html5QrCode.resume();
+        isProcessing = false;
+    }
+}
