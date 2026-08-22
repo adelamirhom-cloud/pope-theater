@@ -18,7 +18,6 @@
             margin: 0; text-align: center; color: #2c3e50; padding-bottom: 30px; 
         }
 
-        /* العداد التنازلي */
         .countdown-bar {
             background: linear-gradient(90deg, #1a252f, #2c3e50);
             color: #f1c40f; padding: 15px 10px; display: flex; justify-content: center;
@@ -35,7 +34,6 @@
             border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.08); 
         }
         
-        /* أزرار التبديل بين الصالة والبلكونة */
         .floor-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;}
         .floor-btn { padding: 12px 30px; border: 2px solid #2980b9; background: transparent; color: #2980b9; border-radius: 10px; font-weight: 700; font-size: 16px; cursor: pointer; transition: 0.3s; font-family: inherit;}
         .floor-btn.active { background: #2980b9; color: white; box-shadow: 0 4px 10px rgba(41, 128, 185, 0.3);}
@@ -127,7 +125,6 @@
         .share-btn { flex: 1; padding: 14px; background: #25D366; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
         .close-ticket-btn { flex: 1; padding: 14px; background: #e74c3c; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; }
 
-        /* تعديلات الموبايل الرايقة */
         @media (max-width: 768px) {
             body { padding-bottom: 300px; padding-top: 0; margin: 0; }
             .theater-wrapper { padding: 15px 5px; border-radius: 0; box-shadow: none; }
@@ -139,7 +136,6 @@
             .legend-item { font-size: 12px; }
             .legend-box { width: 18px; height: 18px; }
             
-            /* الفورم الزجاجي العائم أسفل الشاشة */
             .booking-form { 
                 position: fixed; bottom: 0; left: 0; right: 0; margin: 0; 
                 border-radius: 25px 25px 0 0; padding: 20px 15px; z-index: 1000; 
@@ -157,7 +153,6 @@
 </head>
 <body>
 
-    <!-- العداد التنازلي لموعد 22 سبتمبر -->
     <div class="countdown-bar">
         <div class="cd-title">باقي على الحدث:</div>
         <div class="cd-box"><span class="cd-number" id="cd-days">00</span><span class="cd-label">يوم</span></div>
@@ -166,13 +161,12 @@
         <div class="cd-box"><span class="cd-number" id="cd-secs">00</span><span class="cd-label">ثانية</span></div>
     </div>
 
-    <!-- منطقة المسرح -->
     <div class="theater-wrapper">
         
-        <!-- أزرار التبديل بين الصالة والبلكونة -->
         <div class="floor-toggle">
             <button id="btn-main" class="floor-btn active" onclick="switchFloor('main')">الصالة الرئيسية</button>
-            <button id="btn-balcony" class="floor-btn" onclick="switchFloor('balcony')">البلكونة (70 مقعد)</button>
+            <!-- 🔴 زرار البلكونة هيبدأ مخفي وهيتراقب عن طريق الفايربيز 🔴 -->
+            <button id="btn-balcony" class="floor-btn" onclick="switchFloor('balcony')" style="display: none;">البلكونة (70 مقعد)</button>
         </div>
 
         <div class="scroll-container">
@@ -204,7 +198,6 @@
     
     <div class="sys-footer">System Powered by Rave Technology</div>
 
-    <!-- واجهة عرض التذكرة -->
     <div class="ticket-modal" id="ticket-modal">
         <div class="ticket-capture-area" id="ticket-capture-area">
             <div class="ticket-header">تذكرة دخول المسرح 🎭</div>
@@ -223,12 +216,10 @@
         </div>
     </div>
 
-    <!-- كود الجافاسكريبت النظيف -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update, get, set, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // توليد معرف فريد للمستخدم لزوم القفل الذكي
         const mySessionId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
 
         const firebaseConfig = {
@@ -244,7 +235,22 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 🔴 إضافة الـ 416 كود يدوياً بالظبط زي ما طلبت
+        // 🔴 مراقبة ظهور البلكونة من الإدارة 🔴
+        onValue(ref(db, 'settings/balconyVisible'), (snapshot) => {
+            const isVisible = snapshot.val() || false;
+            const balconyBtn = document.getElementById('btn-balcony');
+            
+            if (isVisible) {
+                balconyBtn.style.display = 'inline-block';
+            } else {
+                balconyBtn.style.display = 'none';
+                if (currentFloor === 'balcony') {
+                    switchFloor('main');
+                    Swal.fire({ toast: true, position: 'top', icon: 'info', title: 'تم إغلاق البلكونة مؤقتاً', showConfirmButton: false, timer: 3000 });
+                }
+            }
+        });
+
         const validTicketCodes = [
             "Q7L2X9", "B5M8K3", "P4V9R1", "W3J6H7", "C8T1F2", "Z9N5D4", "G2X7Y8", "M1K4B6", "R6H3P9", "D8F2V5",
             "X5T7C1", "L9Q4N2", "Y3M1Z8", "K6B5W7", "V2R8J3", "H7P6D9", "F1C4T2", "N4Z9G5", "J8X2M1", "T5V7R6",
@@ -287,10 +293,10 @@
             "C7F4P1", "B1M6D8", "P9C2K5", "V5T1F3", "M2V9C8", "Q4P5M7", "R9K1V6", "H7C8T2", "F3P4B5", "N6V1K9",
             "D1F9M4", "L3C2P7", "X5M8V1", "T8F3C6", "C4V7K2", "B5P1M9", "P7D6V4", "V3C9F8", "M6K2P5", "R4V8M1",
             "H1T5C9", "F9B4V2", "N2C1P7", "W9X2M4", "K7P5R1", "V4J8D9", "Q2L6N3", "B5C9F7", "H1Z4T8", "X6G3V2",
-            "M9Y5K1", "R3W7P4", "D8N2L6", "F4T9C5", "Z1V6G8", "P7B3H2"
+            "M9Y5K1", "R3W7P4", "D8N2L6", "F4T9C5", "Z1V6G8", "P7B3H2", "N5M1Y9", "L2Q8X4", "T6R4W7", "C9K2P5", 
+            "V8J5D1", "G3L9N6", "Y7F1C4"
         ];
 
-        // خريطة الصالة الرئيسية
         const layout = [
             { row: 'A', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,-1] },
             { row: 'B', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
@@ -313,7 +319,6 @@
             { row: 'R', farOdd: [23,21,19,17], mainOdd: [0,0,0,9,7,5,3,1],    mainEven: [2,4,6,8,10,0,0],   farEven: [16,18,20,22] }
         ];
 
-        // خريطة البلكونة
         const balconyLayout = [
             { row: 'BA', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
             { row: 'BB', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
@@ -557,12 +562,7 @@
 
             if(selectedSeats.length === 0) { Swal.fire({ icon: 'error', title: 'خطأ', text: 'حدد مقعداً أولاً.', confirmButtonColor: '#e74c3c' }); return; }
             if(!userName || !ticketCode) { Swal.fire({ icon: 'warning', title: 'بيانات ناقصة', text: 'أدخل الاسم والكود.', confirmButtonColor: '#f39c12' }); return; }
-            
-            // 🔴 التحقق الصارم إن الكود موجود من ضمن الـ 416 بس
-            if (!validTicketCodes.includes(ticketCode)) { 
-                Swal.fire({ icon: 'error', title: 'كود غير صحيح', text: 'عفواً، كود التيكت هذا غير صحيح أو غير مسجل في النظام.', confirmButtonColor: '#e74c3c' }); 
-                return; 
-            }
+            if (!validTicketCodes.includes(ticketCode)) { Swal.fire({ icon: 'error', title: 'كود غير صحيح', text: 'عفواً، كود التيكت هذا غير صحيح أو غير مسجل في النظام.', confirmButtonColor: '#e74c3c' }); return; }
 
             const confirmBtn = document.getElementById('confirm-btn');
             const btnText = document.getElementById('btn-text');
@@ -581,13 +581,13 @@
                 const seatId = selectedSeats[0];
                 const updates = {};
                 
-                // 🔴 الإضافة السحرية لصفحة الخزينة (source: "online")
+                // 🔴 ربط الحجز بالدفع الأونلاين أوتوماتيك 🔴
                 updates['/bookings/' + seatId] = { 
                     name: userName, 
                     code: ticketCode, 
                     bookedAt: new Date().toISOString(), 
                     status: "confirmed",
-                    source: "online"
+                    source: "online" 
                 };
                 updates['/usedCodes/' + ticketCode] = true;
                 updates['/lockedSeats/' + seatId] = null; 
@@ -610,7 +610,6 @@
             function resetButton() { confirmBtn.disabled = false; btnText.innerText = "تأكيد الحجز"; btnSpinner.style.display = "none"; }
         });
 
-        // تشغيل الوظائف الأساسية
         generateSeats(); 
         listenToBookings(); 
         listenToLocks();
