@@ -46,7 +46,6 @@
         .action-btn { background: #3498db; } .action-btn:hover { background: #2980b9; } .action-btn:disabled { background: #bdc3c7; cursor: not-allowed; }
         .action-btn-del { background: #e74c3c; } .action-btn-del:hover { background: #c0392b; }
 
-        /* خريطة المسرح للإدارة */
         .map-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; }
         .map-container { background: #fff; width: 95%; max-width: 1200px; height: 90vh; border-radius: 15px; padding: 20px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
         .map-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #ecf0f1; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;}
@@ -82,7 +81,6 @@
         .seat:hover::after { opacity: 1; visibility: visible; }
         
         .swal2-container.swal-on-top { z-index: 999999 !important; }
-        .seat-view-img { border-radius: 12px; border: 3px solid #ecf0f1; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -104,7 +102,7 @@
         <div id="admin-stats" class="dashboard-stats" style="display: none;">
             <div class="stat-card">
                 <h3>إجمالي الحجوزات</h3>
-                <p class="num"><span id="total-booked">0</span> / 416</p> <!-- تم التعديل لـ 416 -->
+                <p class="num"><span id="total-booked">0</span> / 416</p>
             </div>
             <div class="stat-card stat-percentage">
                 <h3>نسبة الإشغال</h3>
@@ -121,6 +119,7 @@
         </div>
 
         <div id="admin-controls" class="controls-section" style="display: none;">
+            
             <div class="control-box">
                 <h3>👑 حجز VIP (مباشر من الإدارة)</h3>
                 <div class="vip-form">
@@ -130,6 +129,13 @@
                 </div>
             </div>
             
+            <!-- 🔴 التحكم الجديد في ظهور البلكونة للجمهور 🔴 -->
+            <div class="control-box" style="border-color: #9b59b6; background-color: #f4ecf7;">
+                <h3 style="color: #8e44ad;">🎭 التحكم في البلكونة</h3>
+                <p style="font-size: 13px; color: #7f8c8d; margin-top: 0;">يتم إظهار البلكونة في صفحة الحجز فقط عندما تمتلئ الصالة الرئيسية.</p>
+                <button id="toggle-balcony-btn" class="btn-vip" style="width: 100%; justify-content: center; background-color: #8e44ad;" onclick="toggleBalcony()">⏳ جاري التحميل...</button>
+            </div>
+
             <div class="control-box" style="border-color: #3498db; background-color: #ebf5fb;">
                 <h3 style="color: #2980b9;">📢 تنبيهات حية للمنظمين</h3>
                 <div class="vip-form">
@@ -156,11 +162,11 @@
         </div>
     </div>
 
-    <!-- نافذة الخريطة التفاعلية -->
+    <!-- نافذة الخريطة التفاعلية للإدارة -->
     <div id="map-modal" class="map-modal">
         <div class="map-container">
             <div class="map-header">
-                <h2>🗺️ خريطة المسرح التفاعلية (Live) - <span style="font-size: 14px; color: #7f8c8d; font-weight: normal;">اضغط على الكرسي لمعاينة الرؤية</span></h2>
+                <h2>🗺️ خريطة المسرح التفاعلية (Live)</h2>
                 <div class="floor-toggle">
                     <button id="btn-map-main" class="floor-btn active" onclick="switchMapFloor('main')">الصالة الرئيسية</button>
                     <button id="btn-map-balcony" class="floor-btn" onclick="switchMapFloor('balcony')">البلكونة</button>
@@ -185,6 +191,7 @@
         import { getDatabase, ref, onValue, update, get, remove, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
         let currentRole = 'usher'; 
+        let isBalconyVisibleToPublic = false; // متغير حالة البلكونة
 
         Swal.fire({
             title: 'تسجيل الدخول', input: 'password', inputPlaceholder: 'أدخل كلمة المرور...',
@@ -227,7 +234,34 @@
         const db = getDatabase(app);
 
         let bookingsData = {};
-        const TOTAL_SEATS = 416; // 🔴 تم تعديل السعة لـ 416 هنا
+        const TOTAL_SEATS = 416;
+
+        // 🔴 مراقبة حالة البلكونة للتحكم فيها 🔴
+        onValue(ref(db, 'settings/balconyVisible'), (snapshot) => {
+            isBalconyVisibleToPublic = snapshot.val() || false;
+            const btn = document.getElementById('toggle-balcony-btn');
+            if (isBalconyVisibleToPublic) {
+                btn.innerHTML = '👁️ إخفاء البلكونة عن الجمهور';
+                btn.style.backgroundColor = '#e74c3c'; // لون أحمر معناه إن الدوسة الجاية هتقفلها
+            } else {
+                btn.innerHTML = '🚀 إظهار البلكونة للجمهور';
+                btn.style.backgroundColor = '#27ae60'; // لون أخضر معناه إن الدوسة الجاية هتفتحها
+            }
+        });
+
+        // 🔴 دالة زرار التبديل 🔴
+        window.toggleBalcony = async function() {
+            try {
+                await set(ref(db, 'settings/balconyVisible'), !isBalconyVisibleToPublic);
+                Swal.fire({
+                    toast: true, position: 'top-end', icon: 'success',
+                    title: !isBalconyVisibleToPublic ? 'تم إظهار البلكونة للجمهور!' : 'تم إخفاء البلكونة عن الجمهور!',
+                    showConfirmButton: false, timer: 2500
+                });
+            } catch (error) {
+                Swal.fire('خطأ', 'حدثت مشكلة في تغيير الحالة', 'error');
+            }
+        }
 
         window.sendAdminAlert = async function() {
             const msg = document.getElementById('alert-message').value.trim();
@@ -391,7 +425,6 @@
             seat.innerText = num;
             seat.setAttribute('data-info', `مقعد ${seatId} - متاح (اضغط للمعاينة)`);
 
-            // 🔴 تم استرجاع ميزة المعاينة بالضغط 🔴
             seat.onclick = () => showSeatView(seatId);
 
             if (bookingsData[seatId]) {
@@ -407,41 +440,22 @@
             return seat;
         }
 
-        // 🔴 دالة معاينة المقاعد الذكية (تفصل بين الصالة والبلكونة) 🔴
         window.showSeatView = function(seatId) {
-            let imageUrl = '';
-            let viewType = '';
-
-            // لو الكرسي بيبدأ بـ B وبعده حرف تاني (زي BA, BB) يبقى بلكونة
+            let imageUrl = ''; let viewType = '';
             if (seatId.startsWith('BA') || seatId.startsWith('BB') || seatId.startsWith('BC') || seatId.startsWith('BD') || seatId.startsWith('BE')) {
                 imageUrl = 'https://placehold.co/600x350/f39c12/ffffff?text=Balcony+View';
                 viewType = '👀 رؤية علوية من البلكونة (Balcony View)';
             } else {
-                // مقاعد الصالة الرئيسية
                 const row = seatId.charAt(0).toUpperCase();
                 if (['A', 'B', 'C', 'D', 'E', 'F'].includes(row)) {
-                    imageUrl = 'https://placehold.co/600x350/2c3e50/ffffff?text=Front+View'; 
-                    viewType = '👀 رؤية أمامية قريبة (Front View)';
+                    imageUrl = 'https://placehold.co/600x350/2c3e50/ffffff?text=Front+View'; viewType = '👀 رؤية أمامية قريبة (Front View)';
                 } else if (['G', 'H', 'I', 'J', 'K', 'L'].includes(row)) {
-                    imageUrl = 'https://placehold.co/600x350/8e44ad/ffffff?text=Middle+View'; 
-                    viewType = '👀 رؤية متوسطة (Middle View)';
+                    imageUrl = 'https://placehold.co/600x350/8e44ad/ffffff?text=Middle+View'; viewType = '👀 رؤية متوسطة (Middle View)';
                 } else {
-                    imageUrl = 'https://placehold.co/600x350/e74c3c/ffffff?text=Back+View'; 
-                    viewType = '👀 رؤية بانورامية خلفية (Back View)';
+                    imageUrl = 'https://placehold.co/600x350/e74c3c/ffffff?text=Back+View'; viewType = '👀 رؤية بانورامية خلفية (Back View)';
                 }
             }
-
-            Swal.fire({
-                target: document.getElementById('map-modal'), 
-                title: `رؤية مقعد ${seatId}`,
-                text: viewType,
-                imageUrl: imageUrl,
-                imageWidth: 600,
-                imageHeight: 350,
-                confirmButtonText: 'إغلاق المعاينة',
-                confirmButtonColor: '#2c3e50',
-                customClass: { container: 'swal-on-top' }
-            });
+            Swal.fire({ target: document.getElementById('map-modal'), title: `رؤية مقعد ${seatId}`, text: viewType, imageUrl: imageUrl, imageWidth: 600, imageHeight: 350, confirmButtonText: 'إغلاق المعاينة', confirmButtonColor: '#2c3e50', customClass: { container: 'swal-on-top' } });
         }
     </script>
 </body>
