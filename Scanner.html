@@ -96,11 +96,17 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
+        // 🔴 كلمة المرور المحدثة الخاصة بماسح البوابات: scan229
         Swal.fire({
-            title: 'دخول فريق الأمن', input: 'password', inputPlaceholder: 'كلمة المرور...',
-            allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#2c3e50'
+            title: 'دخول فريق الأمن', 
+            input: 'password', 
+            inputPlaceholder: 'كلمة المرور...',
+            allowOutsideClick: false, 
+            allowEscapeKey: false, 
+            confirmButtonText: 'دخول', 
+            confirmButtonColor: '#2c3e50'
         }).then((result) => {
-            if (result.value === 'avatege2019') {
+            if (result.value === 'scan229') {
                 document.getElementById('main-app').style.display = 'block';
                 initApp();
             } else {
@@ -130,7 +136,7 @@
             const app = initializeApp(firebaseConfig);
             db = getDatabase(app);
 
-            // مزامنة الحجوزات مع الذاكرة المحلية للأوفلاين
+            // مزامنة الحجوزات مع الذاكرة المحلية لتشغيل وضع الأوفلاين
             onValue(ref(db, 'bookings'), (snapshot) => {
                 if (navigator.onLine) {
                     const data = snapshot.val() || {};
@@ -138,7 +144,7 @@
                 }
             });
 
-            // استقبال التنبيهات الحية
+            // استقبال التنبيهات الحية الفورية مع الصوت
             onValue(ref(db, 'adminAlerts/current'), (snapshot) => {
                 const data = snapshot.val();
                 if (data && data.id) {
@@ -169,7 +175,7 @@
                 }
             });
 
-            // إعداد وتشغيل الكاميرا فائق السرعة
+            // إعداد الكاميرا فائق السرعة
             html5QrCode = new Html5Qrcode("reader");
             const config = { 
                 fps: 25,
@@ -263,7 +269,7 @@
         }
 
         function onScanFailure(error) {
-            // تجاهل إطارات الفحص الفارغة أثناء الحركة
+            // تجاهل الإطارات الفارغة أثناء حركة الكاميرا
         }
 
         async function processTicketCode(codeToVerify) {
@@ -281,7 +287,7 @@
 
             if (ticketData) {
                 if (ticketData.status === 'attended') {
-                    // تذكرة مستخدمة مسبقاً (نافذة ثابتة)
+                    // تذكرة مستخدمة مسبقاً (نافذة ثابتة تتطلب الضغط)
                     await Swal.fire({
                         icon: 'error', 
                         title: 'تذكرة مستخدمة مسبقاً! ❌',
@@ -328,7 +334,7 @@
                     });
                 }
             } else {
-                // كود غير صحيح (نافذة ثابتة)
+                // كود غير مسجل
                 await Swal.fire({
                     icon: 'warning', 
                     title: 'كود غير صحيح! ⚠️',
@@ -339,7 +345,7 @@
                 });
             }
 
-            // استئناف الكاميرا للمسح التالي بعد الضغط على الزر
+            // استئناف عمل الكاميرا بعد إغلاق النافذة
             if (html5QrCode && html5QrCode.getState() === 3) {
                 html5QrCode.resume();
             }
