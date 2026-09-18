@@ -3,131 +3,352 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نقطة البيع (POS) | مسرح المقر البابوي</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>نقطة البيع وحجز المجموعات (POS) | مسرح المقر</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <style>
-        :root { --primary: #2c3e50; --secondary: #34495e; --accent: #f1c40f; --success: #27ae60; --danger: #e74c3c; }
-        body { font-family: 'Cairo', sans-serif; background-color: #ecf0f1; margin: 0; color: #333; height: 100vh; overflow: hidden; }
-        
-        .pos-header { background: var(--primary); color: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        .pos-title { margin: 0; font-size: 20px; color: var(--accent); display: flex; align-items: center; gap: 10px; }
-        .cashier-badge { background: #3498db; color: white; font-size: 12px; padding: 4px 10px; border-radius: 20px; }
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #2980b9;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --bg: #f5f7fa;
+        }
 
-        .pos-layout { display: flex; height: calc(100vh - 65px); }
-        
-        .map-section { flex: 2; background: #fff; overflow-y: auto; padding: 20px; border-left: 2px solid #ddd; }
-        .stage-top { background: linear-gradient(145deg, #8d6e63, #5d4037); color: #ffecb3; font-size: 20px; font-weight: 700; padding: 10px; margin: 0 auto 20px auto; border-radius: 8px 8px 30px 30px; text-align: center; width: 70%; letter-spacing: 2px; }
-        .seating-area { display: flex; flex-direction: column; gap: 6px; align-items: center; min-width: 800px; padding-bottom: 50px; direction: ltr;}
-        .row { display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .seat-group { display: flex; gap: 4px; }
-        .seat { width: 32px; height: 32px; border: 1px solid #bdc3c7; border-radius: 6px; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: 700; color: #2c3e50; background: #f9f9f9; cursor: pointer; transition: 0.2s; user-select: none; }
-        .seat:hover:not(.booked):not(.hidden-seat):not(.empty-x) { background: #e0e0e0; transform: scale(1.1); }
-        .row-label { width: 32px; height: 32px; background: var(--secondary); color: white; font-weight: 700; display: flex; justify-content: center; align-items: center; border-radius: 4px; font-size: 12px; }
-        
-        .seat.booked { background: var(--danger); color: white; border-color: #c0392b; cursor: not-allowed; opacity: 0.8; }
-        .seat.selected { background: #3498db; color: white; border-color: #2980b9; box-shadow: 0 0 8px rgba(52, 152, 219, 0.6); transform: scale(1.1); }
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px;
+            color: var(--primary);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .header h1 { margin: 0; font-size: 22px; }
+
+        .pos-container {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 20px;
+        }
+
+        @media (max-width: 992px) {
+            .pos-container { grid-template-columns: 1fr; }
+        }
+
+        .theater-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .floor-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .floor-btn {
+            padding: 10px 25px;
+            border: 2px solid var(--accent);
+            background: transparent;
+            color: var(--accent);
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.3s;
+        }
+        .floor-btn.active {
+            background: var(--accent);
+            color: white;
+        }
+
+        .scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            direction: rtl;
+            padding-bottom: 15px;
+        }
+
+        .theater-inner {
+            min-width: 1050px;
+            margin: 0 auto;
+            direction: ltr;
+        }
+
+        .stage-top {
+            background: linear-gradient(145deg, #8d6e63, #5d4037);
+            color: #ffecb3;
+            font-size: 22px;
+            font-weight: 700;
+            padding: 14px;
+            margin-bottom: 25px;
+            border-radius: 8px 8px 40px 40px;
+            text-align: center;
+            letter-spacing: 2px;
+            transition: 0.3s;
+        }
+
+        #seating-area {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .seat-group { display: flex; gap: 5px; }
+
+        .seat {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(145deg, #f0f0f0, #cacaca);
+            border: 1px solid #bcbcbc;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #333;
+            cursor: pointer;
+            user-select: none;
+            flex-shrink: 0;
+            transition: 0.2s;
+        }
+
+        .seat:hover:not(.booked):not(.empty-x):not(.hidden-seat):not(.mixer-block) {
+            transform: scale(1.1);
+            background: #d5dbdb;
+        }
+
+        .seat.selected {
+            background: linear-gradient(145deg, #27ae60, #1e8449) !important;
+            color: white !important;
+            border-color: #145a32 !important;
+        }
+
+        .seat.booked {
+            background: linear-gradient(145deg, #e74c3c, #c0392b) !important;
+            color: white !important;
+            border-color: #922b21 !important;
+            cursor: not-allowed;
+            opacity: 0.75;
+        }
+
         .seat.hidden-seat { background: transparent; border: none; pointer-events: none; }
-        .seat.empty-x { background: #eceff1; color: transparent; border-color: #cfd8dc; pointer-events: none; }
-        .seat.mixer-block { width: 140px; background: var(--primary); color: var(--accent); font-size: 12px; pointer-events: none; }
+        .seat.empty-x { background: #eceff1; color: #b0bec5; border-color: #cfd8dc; pointer-events: none; }
+        .seat.mixer-block { width: 140px; background: #2c3e50; color: #f1c40f; pointer-events: none; font-size: 12px; }
 
-        .cart-section { flex: 1; background: #fdfbf7; display: flex; flex-direction: column; padding: 20px; min-width: 300px; box-shadow: -2px 0 10px rgba(0,0,0,0.05); z-index: 5; }
-        .cart-header { border-bottom: 2px dashed #ccc; padding-bottom: 10px; margin-bottom: 15px; }
-        .cart-header h3 { margin: 0; color: var(--primary); }
-        
-        .cart-items { flex: 1; overflow-y: auto; margin-bottom: 15px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 15px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ecf0f1; box-shadow: 0 2px 5px rgba(0,0,0,0.02); }
-        .cart-item-seat { font-weight: bold; color: #3498db; font-size: 18px; }
-        .cart-item-remove { color: var(--danger); cursor: pointer; font-size: 18px; font-weight: bold; }
-        
-        .customer-info { margin-bottom: 15px; }
-        .customer-info input { width: 100%; padding: 12px; border: 2px solid #bdc3c7; border-radius: 8px; font-family: inherit; font-size: 14px; box-sizing: border-box; }
-        .customer-info input:focus { outline: none; border-color: #3498db; }
+        .row-label {
+            width: 32px;
+            height: 32px;
+            background: var(--primary);
+            color: white;
+            font-weight: 700;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 6px;
+            font-size: 13px;
+        }
 
-        .cart-summary { background: var(--primary); color: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; text-align: center; }
-        .cart-summary .total-count { font-size: 24px; font-weight: bold; color: var(--accent); margin: 5px 0; }
-        
-        .btn-checkout { background: var(--success); color: white; border: none; padding: 15px; width: 100%; border-radius: 8px; font-size: 18px; font-weight: bold; font-family: inherit; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; gap: 10px; align-items: center;}
-        .btn-checkout:hover { background: #2ecc71; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.4); }
-        .btn-checkout:disabled { background: #95a5a6; cursor: not-allowed; transform: none; box-shadow: none; }
+        /* سلة الحجز ولوحة الإدخال */
+        .cart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            height: fit-content;
+        }
 
-        #printable-receipts { display: none; }
-        @media print {
-            body * { visibility: hidden; }
-            #printable-receipts, #printable-receipts * { visibility: visible; }
-            #printable-receipts { display: block; position: absolute; left: 0; top: 0; width: 80mm; padding: 0; margin: 0; }
-            
-            .ticket-print { width: 75mm; margin: 0 auto 10mm auto; padding: 5mm; text-align: center; font-family: 'Cairo', sans-serif; border-bottom: 2px dashed #000; page-break-after: always; }
-            .ticket-print h2 { margin: 0 0 5px 0; font-size: 16px; border-bottom: 1px solid #000; padding-bottom: 5px; }
-            .ticket-print .seat-num { font-size: 24px; font-weight: bold; margin: 5px 0; }
-            .ticket-print .code-text { font-size: 14px; font-weight: bold; font-family: monospace; background: #eee; padding: 4px; margin: 5px 0; display: inline-block; border: 1px solid #999;}
-            .ticket-print .info { font-size: 12px; margin: 2px 0; }
-            .ticket-print .footer { font-size: 10px; margin-top: 10px; font-weight: bold;}
+        .cart-card h2 {
+            margin: 0;
+            font-size: 18px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+
+        .selected-box {
+            min-height: 80px;
+            max-height: 140px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            border: 1px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .seat-tag {
+            background: var(--accent);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            text-align: right;
+        }
+
+        .form-group label { font-size: 13px; font-weight: bold; color: var(--secondary); }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .price-summary {
+            background: #eafaf1;
+            border: 1px solid #a3e4d7;
+            padding: 12px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 16px;
+            color: #117864;
+        }
+
+        .btn-checkout {
+            background: linear-gradient(135deg, var(--success), #219653);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.3s;
+        }
+
+        .btn-checkout:hover { opacity: 0.9; }
+        .btn-clear {
+            background: #f1f2f6;
+            color: #7f8c8d;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div class="pos-header">
-        <h1 class="pos-title">نقطة البيع (شباك التذاكر) <span class="cashier-badge">Live POS</span></h1>
-        <div style="font-size: 14px; font-weight: bold; color: #ecf0f1;">Rave Technology Solutions</div>
+    <div class="header">
+        <h1>🎟️ شباك التذاكر المباشر وحجز المجموعات (POS)</h1>
+        <div style="font-size: 14px;">مسرح المقر البابوي</div>
     </div>
 
-    <div class="pos-layout">
-        <div class="map-section">
-            <div class="stage-top">خشبة المسرح</div>
-            <div id="map-seating-area" class="seating-area"></div>
+    <div class="pos-container">
+        <!-- خريطة المسرح -->
+        <div class="theater-card">
+            <div class="floor-toggle">
+                <button id="btn-main" class="floor-btn active" onclick="switchFloor('main')">الصالة الرئيسية</button>
+                <button id="btn-balcony" class="floor-btn" onclick="switchFloor('balcony')">البلكونة</button>
+            </div>
+
+            <div class="scroll-container">
+                <div class="theater-inner">
+                    <div id="stage-display" class="stage-top">خشبة المسرح</div>
+                    <div id="seating-area"></div>
+                </div>
+            </div>
         </div>
 
-        <div class="cart-section">
-            <div class="cart-header">
-                <h3>🛒 المقاعد المحددة</h3>
-            </div>
+        <!-- لوحة إنهاء الحجز والدفع -->
+        <div class="cart-card">
+            <h2>🛒 تفاصيل الحجز</h2>
             
-            <div class="cart-items" id="cart-items">
-                <div style="text-align: center; color: #95a5a6; margin-top: 50px;">لم يتم تحديد مقاعد بعد.</div>
+            <div class="form-group">
+                <label>المقاعد المحددة (<span id="seat-count">0</span>):</label>
+                <div class="selected-box" id="selected-box">
+                    <span style="color:#95a5a6; font-size:12px;">انقر على المقاعد لاختيارها</span>
+                </div>
             </div>
 
-            <div class="customer-info">
-                <input type="text" id="customer-name" placeholder="اسم العميل (اختياري)">
+            <div class="form-group">
+                <label>اسم الحاجز / المجموعة:</label>
+                <input type="text" id="cust-name" placeholder="اسم الشخص أو اسم الفوج">
             </div>
 
-            <div class="cart-summary">
-                <div>إجمالي التذاكر</div>
-                <div class="total-count" id="total-count">0</div>
+            <div class="form-group">
+                <label>رقم الهاتف:</label>
+                <input type="tel" id="cust-phone" placeholder="01xxxxxxxxx">
             </div>
 
-            <button class="btn-checkout" id="btn-checkout" onclick="checkout()" disabled>
-                🖨️ تأكيد الحجز والطباعة
-            </button>
+            <div class="form-group">
+                <label>سعر التذكرة للكرسي (ج.م):</label>
+                <input type="number" id="unit-price" value="100" oninput="updateTotal()">
+            </div>
+
+            <div class="price-summary">
+                <span>الإجمالي المطلوب:</span>
+                <span id="total-price">0 ج.م</span>
+            </div>
+
+            <button class="btn-checkout" onclick="confirmPosBooking()">✅ تأكيد وطباعة / حجز</button>
+            <button class="btn-clear" onclick="clearSelection()">تفريغ الاختيار</button>
         </div>
     </div>
-
-    <div id="printable-receipts"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-        // طلب الباسورد المباشر
-        Swal.fire({
-            title: 'دخول الكاشير', input: 'password', inputPlaceholder: 'كلمة مرور الـ POS',
-            allowOutsideClick: false, allowEscapeKey: false, confirmButtonText: 'دخول', confirmButtonColor: '#2c3e50'
-        }).then((result) => {
-            if (result.value === 'POS2019') {
-                // تمام الباسورد صح، ابدأ شغل التطبيق
-                initApp();
-            } else {
-                document.body.innerHTML = '<h2 style="text-align:center; margin-top:100px; color:#e74c3c;">خطأ في كلمة المرور. يرجى تحديث الصفحة.</h2>';
-            }
-        });
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
+            authDomain: "test-49b8c.firebaseapp.com",
+            projectId: "test-49b8c",
+            storageBucket: "test-49b8c.firebasestorage.app",
+            messagingSenderId: "658085082590",
+            appId: "1:658085082590:web:632f798dca5a87e2da994f",
+            databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-        let db;
-        let bookingsData = {};
-        let selectedSeats = [];
-
-        const theaterLayout = [
+        const layout = [
             { row: 'A', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,-1] },
             { row: 'B', farOdd: [-1,-1,-1,-1], mainOdd: [0,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
             { row: 'C', farOdd: [-1,-1,-1,-1], mainOdd: [15,13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [16,18,20,22] },
@@ -148,191 +369,228 @@
             { row: 'R', farOdd: [23,21,19,17], mainOdd: [0,0,0,9,7,5,3,1],    mainEven: [2,4,6,8,10,0,0],   farEven: [16,18,20,22] }
         ];
 
-        function initApp() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
-                authDomain: "test-49b8c.firebaseapp.com",
-                projectId: "test-49b8c",
-                storageBucket: "test-49b8c.firebasestorage.app",
-                messagingSenderId: "658085082590",
-                appId: "1:658085082590:web:632f798dca5a87e2da994f",
-                measurementId: "G-G0SHP0PBR0",
-                databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
-            };
-            const app = initializeApp(firebaseConfig);
-            db = getDatabase(app);
+        const balconyLayout = [
+            { row: 'BA', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BB', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BC', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BD', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] },
+            { row: 'BE', farOdd: [], mainOdd: [13,11,9,7,5,3,1], mainEven: [2,4,6,8,10,12,14], farEven: [] }
+        ];
 
-            onValue(ref(db, 'bookings'), (snapshot) => {
-                bookingsData = snapshot.val() || {};
-                selectedSeats = selectedSeats.filter(seat => !bookingsData[seat]);
-                renderMap();
-                updateCartUI();
-            });
-        }
+        let currentFloor = 'main';
+        let selectedSeats = [];
+        let bookedSeats = [];
 
-        function renderMap() {
-            const mapArea = document.getElementById('map-seating-area');
-            mapArea.innerHTML = '';
+        window.switchFloor = function(floor) {
+            currentFloor = floor;
+            document.getElementById('btn-main').classList.toggle('active', floor === 'main');
+            document.getElementById('btn-balcony').classList.toggle('active', floor === 'balcony');
 
-            theaterLayout.forEach(rowData => {
-                const rowDiv = document.createElement('div'); rowDiv.className = 'row';
-                
-                const farOddGroup = document.createElement('div'); farOddGroup.className = 'seat-group';
-                rowData.farOdd.forEach(num => farOddGroup.appendChild(createSeat(rowData.row, num)));
+            const stage = document.getElementById('stage-display');
+            if (floor === 'balcony') {
+                stage.innerText = 'سور البلكونة الأمامي';
+                stage.style.background = 'linear-gradient(145deg, #7f8c8d, #34495e)';
+            } else {
+                stage.innerText = 'خشبة المسرح';
+                stage.style.background = 'linear-gradient(145deg, #8d6e63, #5d4037)';
+            }
+            renderSeats();
+            applyBookedSeats();
+        };
+
+        function renderSeats() {
+            const container = document.getElementById('seating-area');
+            container.innerHTML = '';
+            const activeLayout = currentFloor === 'main' ? layout : balconyLayout;
+
+            activeLayout.forEach(rowData => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+
+                // مجموعة اليسار البعيدة
+                const farOddGroup = document.createElement('div');
+                farOddGroup.className = 'seat-group';
+                rowData.farOdd.forEach(n => farOddGroup.appendChild(createSeat(rowData.row, n)));
                 rowDiv.appendChild(farOddGroup);
 
-                const leftAisle = document.createElement('div'); leftAisle.className = 'row-label'; leftAisle.innerText = rowData.row;
-                rowDiv.appendChild(leftAisle);
+                // اسم الصف يسار
+                const lLabel = document.createElement('div');
+                lLabel.className = 'row-label';
+                lLabel.innerText = rowData.row;
+                rowDiv.appendChild(lLabel);
 
-                const mainOddGroup = document.createElement('div'); mainOddGroup.className = 'seat-group';
-                rowData.mainOdd.forEach(num => mainOddGroup.appendChild(createSeat(rowData.row, num)));
+                // الوسط فردي
+                const mainOddGroup = document.createElement('div');
+                mainOddGroup.className = 'seat-group';
+                rowData.mainOdd.forEach(n => mainOddGroup.appendChild(createSeat(rowData.row, n)));
                 rowDiv.appendChild(mainOddGroup);
 
-                const mainEvenGroup = document.createElement('div'); mainEvenGroup.className = 'seat-group';
-                rowData.mainEven.forEach(num => mainEvenGroup.appendChild(createSeat(rowData.row, num)));
+                // الوسط زوجي
+                const mainEvenGroup = document.createElement('div');
+                mainEvenGroup.className = 'seat-group';
+                rowData.mainEven.forEach(n => mainEvenGroup.appendChild(createSeat(rowData.row, n)));
                 rowDiv.appendChild(mainEvenGroup);
 
-                const rightAisle = document.createElement('div'); rightAisle.className = 'row-label'; rightAisle.innerText = rowData.row;
-                rowDiv.appendChild(rightAisle);
+                // اسم الصف يمين
+                const rLabel = document.createElement('div');
+                rLabel.className = 'row-label';
+                rLabel.innerText = rowData.row;
+                rowDiv.appendChild(rLabel);
 
-                const farEvenGroup = document.createElement('div'); farEvenGroup.className = 'seat-group';
-                rowData.farEven.forEach(num => farEvenGroup.appendChild(createSeat(rowData.row, num)));
+                // مجموعة اليمين البعيدة
+                const farEvenGroup = document.createElement('div');
+                farEvenGroup.className = 'seat-group';
+                rowData.farEven.forEach(n => farEvenGroup.appendChild(createSeat(rowData.row, n)));
                 rowDiv.appendChild(farEvenGroup);
 
-                mapArea.appendChild(rowDiv);
+                container.appendChild(rowDiv);
             });
         }
 
         function createSeat(row, num) {
-            const seat = document.createElement('div');
-            if (num === -1) { seat.className = 'seat hidden-seat'; return seat; }
-            if (num === 0) { seat.className = 'seat empty-x'; seat.innerText = 'X'; return seat; }
-            if (num === 'MIXER') { seat.className = 'seat mixer-block'; seat.innerText = 'ميكسر'; return seat; }
+            const div = document.createElement('div');
+            if (num === -1) { div.className = 'seat hidden-seat'; return div; }
+            if (num === 0) { div.className = 'seat empty-x'; div.innerText = 'X'; return div; }
+            if (num === 'MIXER') { div.className = 'seat mixer-block'; div.innerText = 'ميكسر'; return div; }
 
             const seatId = `${row}${num}`;
-            seat.innerText = num;
-            
-            if (bookingsData[seatId]) {
-                seat.className = 'seat booked';
-            } else if (selectedSeats.includes(seatId)) {
-                seat.className = 'seat selected';
-                seat.onclick = () => toggleSeat(seatId);
-            } else {
-                seat.className = 'seat';
-                seat.onclick = () => toggleSeat(seatId);
-            }
-            return seat;
+            div.className = 'seat';
+            div.id = `pos-seat-${seatId}`;
+            div.innerText = num;
+
+            if (selectedSeats.includes(seatId)) div.classList.add('selected');
+
+            div.onclick = () => toggleSeatSelection(seatId, div);
+            return div;
         }
 
-        window.toggleSeat = function(seatId) {
+        function toggleSeatSelection(seatId, el) {
+            if (el.classList.contains('booked')) return;
+
             if (selectedSeats.includes(seatId)) {
-                selectedSeats = selectedSeats.filter(id => id !== seatId);
+                selectedSeats = selectedSeats.filter(s => s !== seatId);
+                el.classList.remove('selected');
             } else {
                 selectedSeats.push(seatId);
+                el.classList.add('selected');
             }
-            renderMap();
             updateCartUI();
         }
 
-        window.removeSeat = function(seatId) {
-            toggleSeat(seatId);
-        }
-
         function updateCartUI() {
-            const cartItemsDiv = document.getElementById('cart-items');
-            const totalCount = document.getElementById('total-count');
-            const checkoutBtn = document.getElementById('btn-checkout');
+            const box = document.getElementById('selected-box');
+            document.getElementById('seat-count').innerText = selectedSeats.length;
 
             if (selectedSeats.length === 0) {
-                cartItemsDiv.innerHTML = '<div style="text-align: center; color: #95a5a6; margin-top: 50px;">لم يتم تحديد مقاعد بعد.</div>';
-                checkoutBtn.disabled = true;
+                box.innerHTML = '<span style="color:#95a5a6; font-size:12px;">انقر على المقاعد لاختيارها</span>';
             } else {
-                cartItemsDiv.innerHTML = '';
-                selectedSeats.sort((a, b) => a.localeCompare(b, undefined, { numeric: true })).forEach(seatId => {
-                    cartItemsDiv.innerHTML += `
-                        <div class="cart-item">
-                            <span class="cart-item-seat">مقعد ${seatId}</span>
-                            <span class="cart-item-remove" onclick="removeSeat('${seatId}')">✖</span>
-                        </div>
-                    `;
-                });
-                checkoutBtn.disabled = false;
+                box.innerHTML = selectedSeats.map(s => `<span class="seat-tag">${s}</span>`).join('');
             }
-            totalCount.innerText = selectedSeats.length;
+            updateTotal();
         }
 
-        window.checkout = async function() {
-            if (selectedSeats.length === 0) return;
+        window.updateTotal = function() {
+            const unit = parseFloat(document.getElementById('unit-price').value) || 0;
+            const total = selectedSeats.length * unit;
+            document.getElementById('total-price').innerText = `${total} ج.م`;
+        };
 
-            let custName = document.getElementById('customer-name').value.trim();
-            if (!custName) custName = "ضيف (حجز مباشر)";
+        window.clearSelection = function() {
+            selectedSeats = [];
+            document.querySelectorAll('.seat.selected').forEach(s => s.classList.remove('selected'));
+            updateCartUI();
+        };
 
-            Swal.fire({
-                title: 'تأكيد الحجز والطباعة؟',
-                text: `إجمالي المقاعد: ${selectedSeats.length}`,
-                icon: 'question', showCancelButton: true, confirmButtonText: 'تأكيد وطباعة', cancelButtonText: 'تراجع',
-                confirmButtonColor: '#27ae60'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    Swal.fire({title: 'جاري الحفظ وتجهيز الطباعة...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
-                    
-                    try {
-                        const updates = {};
-                        const printData = [];
-
-                        selectedSeats.forEach(seatId => {
-                            const randomCode = 'POS-' + Math.random().toString(36).substr(2, 5).toUpperCase();
-                            
-                            updates[`/bookings/${seatId}`] = {
-                                name: custName,
-                                code: randomCode,
-                                bookedAt: new Date().toISOString(),
-                                status: 'confirmed'
-                                source: 'pos'  // 🔴 الإضافة هنا
-                            };
-                            updates[`/usedCodes/${randomCode}`] = true;
-
-                            printData.push({ seat: seatId, code: randomCode, name: custName });
-                        });
-
-                        await update(ref(db), updates);
-                        generateThermalReceipts(printData);
-                        
-                        selectedSeats = [];
-                        document.getElementById('customer-name').value = '';
-                        updateCartUI();
-                        
-                        Swal.fire('تم بنجاح!', 'تم حفظ الحجز وتجهيز التذاكر.', 'success').then(() => {
-                            window.print();
-                        });
-
-                    } catch (error) {
-                        Swal.fire('خطأ', 'حدث مشكلة في الاتصال.', 'error');
-                    }
+        function applyBookedSeats() {
+            document.querySelectorAll('.seat.booked').forEach(s => s.classList.remove('booked'));
+            bookedSeats.forEach(seatId => {
+                const el = document.getElementById(`pos-seat-${seatId}`);
+                if (el) {
+                    el.classList.remove('selected');
+                    el.classList.add('booked');
                 }
             });
         }
 
-        function generateThermalReceipts(tickets) {
-            const printContainer = document.getElementById('printable-receipts');
-            printContainer.innerHTML = '';
+        // الاستماع لقاعدة البيانات
+        onValue(ref(db, 'bookings'), (snap) => {
+            const data = snap.val() || {};
+            bookedSeats = Object.keys(data);
+            applyBookedSeats();
+        });
 
-            tickets.forEach((ticket) => {
-                const ticketDiv = document.createElement('div');
-                ticketDiv.className = 'ticket-print';
-                
-                ticketDiv.innerHTML = `
-                    <h2>🎭 مسرح المقر البابوي</h2>
-                    <div class="info">تذكرة دخول - ${new Date().toLocaleDateString('ar-EG')}</div>
-                    <div class="seat-num">المقعد: ${ticket.seat}</div>
-                    <div class="info">الاسم: ${ticket.name}</div>
-                    <div class="code-text">${ticket.code}</div>
-                    <div class="info">أظهر هذا الكود عند البوابة</div>
-                    <div class="footer">Powered by Rave Technology</div>
-                `;
-                printContainer.appendChild(ticketDiv);
+        // تأكيد الحجز
+        window.confirmPosBooking = async function() {
+            if (selectedSeats.length === 0) {
+                return Swal.fire('تنبيه', 'يرجى اختيار مقعد واحد على الأقل', 'warning');
+            }
+            const name = document.getElementById('cust-name').value.trim();
+            const phone = document.getElementById('cust-phone').value.trim();
+            const pricePerSeat = parseFloat(document.getElementById('unit-price').value) || 0;
+
+            if (!name) {
+                return Swal.fire('تنبيه', 'يرجى كتابة اسم العميل أو المجموعة', 'warning');
+            }
+
+            const totalAmount = selectedSeats.length * pricePerSeat;
+
+            const confirmResult = await Swal.fire({
+                title: 'تأكيد الحجز المباشر؟',
+                html: `
+                    <div style="text-align:right; font-size:15px;">
+                        <p><b>الاسم:</b> ${name}</p>
+                        <p><b>عدد المقاعد:</b> ${selectedSeats.length} (${selectedSeats.join(', ')})</p>
+                        <p><b>المبلغ المطلوب تحصيله:</b> <span style="color:#27ae60; font-size:18px;">${totalAmount} ج.م</span></p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، استلمت المبلغ وسجل',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#27ae60'
             });
-        }
+
+            if (!confirmResult.isConfirmed) return;
+
+            try {
+                const updates = {};
+                const now = new Date().toISOString();
+
+                selectedSeats.forEach(seatId => {
+                    const randomCode = 'POS-' + Math.random().toString(36).substring(2, 7).toUpperCase();
+                    updates[`/bookings/${seatId}`] = {
+                        name: name,
+                        phone: phone || '',
+                        code: randomCode,
+                        bookedAt: now,
+                        status: 'confirmed',
+                        source: 'pos', // مصدر البيع كاشير/مجموعات
+                        paidAmount: pricePerSeat
+                    };
+                });
+
+                await update(ref(db), updates);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'تم تسجيل الحجز بنجاح ✅',
+                    text: `تم حجز ${selectedSeats.length} مقعد للمجموعة: ${name}`,
+                    confirmButtonColor: '#2c3e50'
+                });
+
+                // تفريغ الحقول
+                selectedSeats = [];
+                document.getElementById('cust-name').value = '';
+                document.getElementById('cust-phone').value = '';
+                updateCartUI();
+
+            } catch (err) {
+                Swal.fire('خطأ', 'تعذر حفظ الحجز: ' + err.message, 'error');
+            }
+        };
+
+        // البدء فوراً برسم الكراسي
+        renderSeats();
     </script>
 </body>
 </html>
