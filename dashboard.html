@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة المؤشرات والتقارير التنفيذية | مسرح المقر البابوي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e293b;
+            --secondary: #0f172a;
+            --online-color: #3b82f6;
+            --pos-color: #10b981;
+            --vip-color: #8b5cf6;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 25px;
+            color: var(--text-main);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* الرأس الترحيبي */
+        .top-nav {
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            padding: 25px 30px;
+            border-radius: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .top-nav h1 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .top-nav p {
+            margin: 0;
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .live-tag {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid #10b981;
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #34d399;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #34d399;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        /* شبكة الكروت الإحصائية */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            left: 0;
+            height: 4px;
+        }
+
+        .stat-card.total::before { background: #6366f1; }
+        .stat-card.online::before { background: var(--online-color); }
+        .stat-card.pos::before { background: var(--pos-color); }
+        .stat-card.revenue::before { background: #f59e0b; }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--text-main);
+            margin: 0;
+            letter-spacing: -1px;
+        }
+
+        .stat-sub {
+            margin-top: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* مخطط المقارنة المباشر */
+        .comparison-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 30px;
+        }
+
+        .comparison-title {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            font-weight: 800;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .progress-bar-container {
+            height: 24px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            display: flex;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .bar-online {
+            background: var(--online-color);
+            transition: width 0.6s ease;
+        }
+
+        .bar-pos {
+            background: var(--pos-color);
+            transition: width 0.6s ease;
+        }
+
+        .bar-vip {
+            background: var(--vip-color);
+            transition: width 0.6s ease;
+        }
+
+        .comparison-legends {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+
+        .legend-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+        }
+
+        /* جدول العمليات الأحدث */
+        .recent-section {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+        }
+
+        .recent-section h3 {
+            margin: 0 0 20px 0;
+            font-size: 18px;
+            font-weight: 800;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: right;
+        }
+
+        th, td {
+            padding: 14px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+        }
+
+        th {
+            background: #f8fafc;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+
+        .badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            display: inline-block;
+        }
+
+        .badge-online { background: #dbeafe; color: #1e40af; }
+        .badge-pos { background: #d1fae5; color: #065f46; }
+        .badge-vip { background: #ede9fe; color: #5b21b6; }
+
+        .sys-credit {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- الرأس -->
+        <div class="top-nav">
+            <div>
+                <h1>📊 التقرير التنفيذي لمبيعات المسرح</h1>
+                <p>متابعة لحظية لمبيعات الأونلاين ومنافذ البيع (POS)</p>
+            </div>
+            <div class="live-tag">
+                <span class="live-dot"></span>
+                مزامنة حية (Live)
+            </div>
+        </div>
+
+        <!-- الكروت الإحصائية -->
+        <div class="stats-grid">
+            <div class="stat-card total">
+                <div class="stat-title">📌 إجمالي المقاعد المحجوزة</div>
+                <div class="stat-number"><span id="booked-seats">0</span> <small style="font-size:18px; font-weight:600; color:#64748b;">/ 416</small></div>
+                <div class="stat-sub">نسبة الإشغال الكلية: <b id="occupancy-rate">0%</b></div>
+            </div>
+
+            <div class="stat-card online">
+                <div class="stat-title">🌐 مبيعات الأونلاين (Online)</div>
+                <div class="stat-number" style="color: var(--online-color);" id="online-count">0</div>
+                <div class="stat-sub">الحصة من الإشغال: <b id="online-percentage">0%</b></div>
+            </div>
+
+            <div class="stat-card pos">
+                <div class="stat-title">🏪 مبيعات شباك التذاكر (POS)</div>
+                <div class="stat-number" style="color: var(--pos-color);" id="pos-count">0</div>
+                <div class="stat-sub">الحصة من الإشغال: <b id="pos-percentage">0%</b></div>
+            </div>
+
+            <div class="stat-card revenue">
+                <div class="stat-title">👥 الحضور الفعلي المسجل</div>
+                <div class="stat-number" style="color: #f59e0b;" id="attended-count">0</div>
+                <div class="stat-sub">نسبة الحضور للمقاعد المباعة: <b id="attended-rate">0%</b></div>
+            </div>
+        </div>
+
+        <!-- مخطط توزيع المبيعات -->
+        <div class="comparison-card">
+            <div class="comparison-title">
+                <span>توزيع قنوات البيع</span>
+                <span style="font-size: 14px; font-weight: normal; color: var(--text-muted);">مقارنة بيانية</span>
+            </div>
+
+            <div class="progress-bar-container">
+                <div id="bar-online" class="bar-online" style="width: 0%;"></div>
+                <div id="bar-pos" class="bar-pos" style="width: 0%;"></div>
+                <div id="bar-vip" class="bar-vip" style="width: 0%;"></div>
+            </div>
+
+            <div class="comparison-legends">
+                <div class="legend-tag">
+                    <span class="dot" style="background: var(--online-color);"></span>
+                    أونلاين: <span id="leg-online">0</span>
+                </div>
+                <div class="legend-tag">
+                    <span class="dot" style="background: var(--pos-color);"></span>
+                    نقطة بيع / POS: <span id="leg-pos">0</span>
+                </div>
+                <div class="legend-tag">
+                    <span class="dot" style="background: var(--vip-color);"></span>
+                    حجوزات VIP: <span id="leg-vip">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول أحدث الحجوزات التدفقية -->
+        <div class="recent-section">
+            <h3>🕒 أحدث الحجوزات المسجلة</h3>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>رقم المقعد</th>
+                            <th>الاسم / المجموعة</th>
+                            <th>قناة الحجز</th>
+                            <th>كود التذكرة</th>
+                            <th>التوقيت</th>
+                            <th>حالة الحضور</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-bookings-table">
+                        <tr><td colspan="6" style="text-align:center; color:#94a3b8;">جاري تحميل البيانات...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="sys-credit">System Powered by Rave Technology Solutions</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
+            authDomain: "test-49b8c.firebaseapp.com",
+            projectId: "test-49b8c",
+            storageBucket: "test-49b8c.firebasestorage.app",
+            messagingSenderId: "658085082590",
+            appId: "1:658085082590:web:632f798dca5a87e2da994f",
+            databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const TOTAL_SEATS = 416;
+
+        onValue(ref(db, 'bookings'), (snapshot) => {
+            const data = snapshot.val() || {};
+            renderDashboard(data);
+        });
+
+        function renderDashboard(bookings) {
+            const seatKeys = Object.keys(bookings);
+            const totalBooked = seatKeys.length;
+
+            let onlineCount = 0;
+            let posCount = 0;
+            let vipCount = 0;
+            let attendedCount = 0;
+
+            const bookingsArray = [];
+
+            seatKeys.forEach(seatId => {
+                const b = bookings[seatId];
+                b.seatId = seatId;
+                bookingsArray.push(b);
+
+                if (b.status === 'attended') attendedCount++;
+
+                // تصنيف المصدر
+                if (b.code === 'VIP') {
+                    vipCount++;
+                } else if (b.source === 'pos') {
+                    posCount++;
+                } else {
+                    // الافتراضي هو حجز أونلاين
+                    onlineCount++;
+                }
+            });
+
+            // تحديث الأرقام
+            document.getElementById('booked-seats').innerText = totalBooked;
+            document.getElementById('occupancy-rate').innerText = ((totalBooked / TOTAL_SEATS) * 100).toFixed(1) + '%';
+            
+            document.getElementById('online-count').innerText = onlineCount;
+            document.getElementById('pos-count').innerText = posCount;
+            document.getElementById('attended-count').innerText = attendedCount;
+
+            const onlinePct = totalBooked > 0 ? ((onlineCount / totalBooked) * 100).toFixed(1) : 0;
+            const posPct = totalBooked > 0 ? ((posCount / totalBooked) * 100).toFixed(1) : 0;
+            const attendedPct = totalBooked > 0 ? ((attendedCount / totalBooked) * 100).toFixed(1) : 0;
+
+            document.getElementById('online-percentage').innerText = onlinePct + '%';
+            document.getElementById('pos-percentage').innerText = posPct + '%';
+            document.getElementById('attended-rate').innerText = attendedPct + '%';
+
+            // شريط التقارن
+            if (totalBooked > 0) {
+                document.getElementById('bar-online').style.width = (onlineCount / totalBooked * 100) + '%';
+                document.getElementById('bar-pos').style.width = (posCount / totalBooked * 100) + '%';
+                document.getElementById('bar-vip').style.width = (vipCount / totalBooked * 100) + '%';
+            } else {
+                document.getElementById('bar-online').style.width = '0%';
+                document.getElementById('bar-pos').style.width = '0%';
+                document.getElementById('bar-vip').style.width = '0%';
+            }
+
+            document.getElementById('leg-online').innerText = `${onlineCount} (${onlinePct}%)`;
+            document.getElementById('leg-pos').innerText = `${posCount} (${posPct}%)`;
+            document.getElementById('leg-vip').innerText = `${vipCount}`;
+
+            // ترتيب الحجوزات بالأحدث
+            bookingsArray.sort((a, b) => new Date(b.bookedAt || 0) - new Date(a.bookedAt || 0));
+
+            // أحدث 15 حجز في الجدول
+            const tbody = document.getElementById('recent-bookings-table');
+            tbody.innerHTML = '';
+
+            if (bookingsArray.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8;">لا توجد حجوزات مسجلة حتى الآن</td></tr>';
+                return;
+            }
+
+            bookingsArray.slice(0, 15).forEach(b => {
+                const tr = document.createElement('tr');
+                
+                let sourceBadge = '';
+                if (b.code === 'VIP') {
+                    sourceBadge = '<span class="badge badge-vip">👑 VIP</span>';
+                } else if (b.source === 'pos') {
+                    sourceBadge = '<span class="badge badge-pos">🏪 POS / شباك</span>';
+                } else {
+                    sourceBadge = '<span class="badge badge-online">🌐 Online</span>';
+                }
+
+                const attendanceBadge = b.status === 'attended' 
+                    ? '<span style="color:#10b981; font-weight:bold;">✅ حاضر</span>' 
+                    : '<span style="color:#64748b;">⏳ منتظر</span>';
+
+                const timeStr = b.bookedAt ? new Date(b.bookedAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : '---';
+
+                tr.innerHTML = `
+                    <td style="font-weight:bold; color:#1e293b;">${b.seatId}</td>
+                    <td>${b.name || '---'}</td>
+                    <td>${sourceBadge}</td>
+                    <td><code>${b.code || '---'}</code></td>
+                    <td>${timeStr}</td>
+                    <td>${attendanceBadge}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
