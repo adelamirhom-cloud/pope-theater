@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>شاشة التحضير السريع | مسرح المقر البابوي</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --pending: #eab308;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --border: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 15px;
+            color: #0f172a;
+        }
+
+        #app-container {
+            display: none;
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        /* رأس الصفحة */
+        .checkin-header {
+            background: linear-gradient(135deg, #0f172a, #1e293b);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .header-top h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 800;
+        }
+
+        /* كروت العدادات الإحصائية الثلاثية */
+        .counters-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        @media (max-width: 600px) {
+            .counters-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .counter-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 12px 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .counter-label {
+            font-size: 13px;
+            color: #94a3b8;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .counter-val {
+            font-size: 26px;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .val-total { color: #38bdf8; }
+        .val-attended { color: #4ade80; }
+        .val-pending { color: #facc15; }
+
+        .progress-track {
+            height: 10px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #22c55e;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* حقل البحث السريع اللحظي */
+        .search-wrapper {
+            position: sticky;
+            top: 10px;
+            z-index: 50;
+            margin-bottom: 15px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 16px 20px;
+            font-size: 18px;
+            font-family: inherit;
+            font-weight: 700;
+            border: 2px solid var(--accent);
+            border-radius: 14px;
+            box-sizing: border-box;
+            background: white;
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.15);
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .search-box:focus {
+            box-shadow: 0 6px 25px rgba(37, 99, 235, 0.25);
+        }
+
+        /* قائمة النتائج */
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .guest-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+
+        .guest-card.attended {
+            background: #f0fdf4;
+            border-color: #86efac;
+        }
+
+        .guest-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .seat-badge {
+            min-width: 60px;
+            height: 48px;
+            background: #0f172a;
+            color: #f8fafc;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 1px;
+        }
+
+        .guest-card.attended .seat-badge {
+            background: var(--success);
+        }
+
+        .guest-details h3 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        .guest-details p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        /* أزرار الإجراءات السريعة */
+        .btn-action {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-confirm {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-confirm:hover {
+            background: #15803d;
+            transform: scale(1.02);
+        }
+
+        .btn-undo {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-undo:hover {
+            background: #e2e8f0;
+            color: #b91c1c;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <!-- الرأس التفاعلي مع العدادات الثلاثية -->
+        <div class="checkin-header">
+            <div class="header-top">
+                <h1>⚡ بوابة التحضير السريع</h1>
+                <span id="stat-pct" style="font-size: 14px; font-weight: 700; color: #38bdf8;">نسبة الحضور: 0%</span>
+            </div>
+
+            <!-- العدادات الثلاثية المطلوبة -->
+            <div class="counters-grid">
+                <div class="counter-card">
+                    <div class="counter-label">📋 المسجلين بالكامل</div>
+                    <div class="counter-val val-total" id="stat-total">0</div>
+                </div>
+                <div class="counter-card">
+                    <div class="counter-label">✅ الذين دخلوا (حضر)</div>
+                    <div class="counter-val val-attended" id="stat-attended">0</div>
+                </div>
+                <div class="counter-card">
+                    <div class="counter-label">⏳ المتبقين (لم يحضروا)</div>
+                    <div class="counter-val val-pending" id="stat-pending">0</div>
+                </div>
+            </div>
+
+            <div class="progress-track">
+                <div id="progress-bar" class="progress-fill"></div>
+            </div>
+        </div>
+
+        <!-- حقل البحث اللحظي -->
+        <div class="search-wrapper">
+            <input 
+                type="text" 
+                id="search-input" 
+                class="search-box" 
+                placeholder="🔍 اكتب اسم الضيف، رقم المقعد (مثل A1)، أو الكود..." 
+                autocomplete="off"
+                autofocus
+            >
+        </div>
+
+        <!-- قائمة النتائج التفاعلية -->
+        <div class="results-list" id="results-container"></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+        // التحقق من الدخول بكلمة المرور 229
+        Swal.fire({
+            title: 'دخول شاشة التحضير',
+            input: 'password',
+            inputPlaceholder: 'كلمة المرور...',
+            allowOutsideClick: false,
+            confirmButtonText: 'دخول',
+            confirmButtonColor: '#1e293b'
+        }).then((res) => {
+            if (res.value === '229') {
+                document.getElementById('app-container').style.display = 'block';
+                document.getElementById('search-input').focus();
+            } else {
+                document.body.innerHTML = '<h3 style="text-align:center; margin-top:50px; color:#ef4444;">كلمة مرور غير صحيحة.</h3>';
+            }
+        });
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAFsvO799G0wlZiRjD4g5GiRGIZm27ANzw",
+            authDomain: "test-49b8c.firebaseapp.com",
+            projectId: "test-49b8c",
+            storageBucket: "test-49b8c.firebasestorage.app",
+            messagingSenderId: "658085082590",
+            appId: "1:658085082590:web:632f798dca5a87e2da994f",
+            databaseURL: "https://test-49b8c-default-rtdb.firebaseio.com"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let allBookings = [];
+
+        // الاستماع المباشر للتحديثات من الفايربيز
+        onValue(ref(db, 'bookings'), (snapshot) => {
+            const data = snapshot.val() || {};
+            allBookings = Object.keys(data).map(seatId => ({
+                seatId: seatId,
+                ...data[seatId]
+            }));
+
+            updateStats();
+            renderList();
+        });
+
+        // تحديث العدادات الثلاثة وشريط التقدم
+        function updateStats() {
+            const total = allBookings.length;
+            const attended = allBookings.filter(b => b.status === 'attended').length;
+            const pending = total - attended;
+            const pct = total > 0 ? Math.round((attended / total) * 100) : 0;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-attended').innerText = attended;
+            document.getElementById('stat-pending').innerText = pending;
+            document.getElementById('stat-pct').innerText = `نسبة الحضور: ${pct}%`;
+            document.getElementById('progress-bar').style.width = pct + '%';
+        }
+
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', () => renderList());
+
+        function renderList() {
+            const query = searchInput.value.trim().toLowerCase();
+            const container = document.getElementById('results-container');
+            container.innerHTML = '';
+
+            let filtered = allBookings;
+            if (query) {
+                filtered = allBookings.filter(b => {
+                    const seat = (b.seatId || '').toLowerCase();
+                    const name = (b.name || '').toLowerCase();
+                    const code = (b.code || '').toLowerCase();
+                    return seat.includes(query) || name.includes(query) || code.includes(query);
+                });
+            }
+
+            // ترتيب الكروت: المنتظر يظهر أولاً يليه الحاضر لتسريع التحضير
+            filtered.sort((a, b) => {
+                if (a.status === 'attended' && b.status !== 'attended') return 1;
+                if (a.status !== 'attended' && b.status === 'attended') return -1;
+                return a.seatId.localeCompare(b.seatId, undefined, { numeric: true });
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="no-results">لا توجد نتائج مطابقة لبحثك</div>';
+                return;
+            }
+
+            filtered.slice(0, 40).forEach(guest => {
+                const isAttended = guest.status === 'attended';
+                const card = document.createElement('div');
+                card.className = `guest-card ${isAttended ? 'attended' : ''}`;
+
+                card.innerHTML = `
+                    <div class="guest-info">
+                        <div class="seat-badge">${guest.seatId}</div>
+                        <div class="guest-details">
+                            <h3>${guest.name || 'بدون اسم'}</h3>
+                            <p>كود التذكرة: <code>${guest.code || '---'}</code></p>
+                        </div>
+                    </div>
+                    <div>
+                        ${isAttended 
+                            ? `<button class="btn-action btn-undo" onclick="toggleAttendance('${guest.seatId}', false)">تراجع ↩</button>`
+                            : `<button class="btn-action btn-confirm" onclick="toggleAttendance('${guest.seatId}', true)">تأكيد حضور ✅</button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // دالة تحضير أو إلغاء تحضير الضيف بنقرة واحدة
+        window.toggleAttendance = async function(seatId, setAttended) {
+            try {
+                const updates = {};
+                updates[`/bookings/${seatId}/status`] = setAttended ? 'attended' : 'confirmed';
+                updates[`/bookings/${seatId}/attendedAt`] = setAttended ? new Date().toISOString() : null;
+
+                await update(ref(db), updates);
+
+                if (setAttended) {
+                    const audio = new Audio('https://actions.google.com/sounds/v1/cartoon/pop.ogg');
+                    audio.play().catch(() => {});
+                }
+            } catch (err) {
+                Swal.fire('خطأ', 'فشل تحديث الحالة: ' + err.message, 'error');
+            }
+        };
+    </script>
+</body>
+</html>
